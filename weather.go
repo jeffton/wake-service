@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	forecastEntryLimit = 24
+	compactForecastLimit = 12
 )
 
 const (
@@ -115,10 +115,6 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 		return forecastSlice[i].Time < forecastSlice[j].Time
 	})
 
-	if len(forecastSlice) > forecastEntryLimit {
-		forecastSlice = forecastSlice[:forecastEntryLimit]
-	}
-
 	response.Forecast = forecastSlice
 
 	if response.Error == nil && len(response.Forecast) == 0 {
@@ -141,9 +137,14 @@ func buildCompactResponse(response ApiResponseJSON) ApiResponseCompact {
 		return compact
 	}
 
-	compact.Forecast = make([][]any, len(response.Forecast))
-	for i, forecast := range response.Forecast {
-		compact.Forecast[i] = forecastToArray(forecast)
+	forecastCount := len(response.Forecast)
+	if forecastCount > compactForecastLimit {
+		forecastCount = compactForecastLimit
+	}
+
+	compact.Forecast = make([][]any, forecastCount)
+	for i := 0; i < forecastCount; i++ {
+		compact.Forecast[i] = forecastToCompactArray(response.Forecast[i])
 	}
 
 	return compact
@@ -285,6 +286,41 @@ func forecastToArray(f Forecast) []any {
 	}
 	if f.CloudCover != nil {
 		entry[ForecastIdxCloudCover] = cloudCoverToArray(f.CloudCover)
+	}
+	if f.Condition != nil {
+		entry[ForecastIdxCondition] = *f.Condition
+	}
+	if f.UvIndex != nil {
+		entry[ForecastIdxUvIndex] = *f.UvIndex
+	}
+	if f.Precipitation != nil {
+		entry[ForecastIdxPrecipitation] = *f.Precipitation
+	}
+
+	return entry
+}
+
+func forecastToCompactArray(f Forecast) []any {
+	entry := make([]any, ForecastEntrySize)
+	entry[ForecastIdxTime] = f.Time
+
+	if f.SeaTemperature != nil {
+		entry[ForecastIdxSeaTemperature] = *f.SeaTemperature
+	}
+	if f.WaveHeight != nil {
+		entry[ForecastIdxWaveHeight] = *f.WaveHeight
+	}
+	if f.WaveDirection != nil {
+		entry[ForecastIdxWaveDirection] = *f.WaveDirection
+	}
+	if f.Temperature != nil {
+		entry[ForecastIdxTemperature] = *f.Temperature
+	}
+	if f.WindSpeed != nil {
+		entry[ForecastIdxWindSpeed] = *f.WindSpeed
+	}
+	if f.WindDirection != nil {
+		entry[ForecastIdxWindDirection] = *f.WindDirection
 	}
 	if f.Condition != nil {
 		entry[ForecastIdxCondition] = *f.Condition
