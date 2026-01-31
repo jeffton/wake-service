@@ -13,11 +13,6 @@ import (
 	"time"
 )
 
-const (
-	defaultLat = 55.7122
-	defaultLon = 12.5890
-)
-
 const cacheTTL = time.Hour
 
 const (
@@ -205,14 +200,18 @@ func decodeWorkoutRequest(r *http.Request) (WorkoutRequest, error) {
 }
 
 func getPosition(r *http.Request) (Position, error) {
-	latStr := r.URL.Query().Get("lat")
-	lonStr := r.URL.Query().Get("lon")
+	latStr := strings.TrimSpace(r.URL.Query().Get("lat"))
+	lonStr := strings.TrimSpace(r.URL.Query().Get("lon"))
 
-	lat, err := parseOrDefault(latStr, defaultLat)
+	if latStr == "" || lonStr == "" {
+		return Position{}, errors.New("lat and lon are required")
+	}
+
+	lat, err := strconv.ParseFloat(latStr, 64)
 	if err != nil {
 		return Position{}, fmt.Errorf("invalid latitude: %w", err)
 	}
-	lon, err := parseOrDefault(lonStr, defaultLon)
+	lon, err := strconv.ParseFloat(lonStr, 64)
 	if err != nil {
 		return Position{}, fmt.Errorf("invalid longitude: %w", err)
 	}
@@ -221,13 +220,6 @@ func getPosition(r *http.Request) (Position, error) {
 	lon = roundCoordinate(lon)
 
 	return Position{Lat: lat, Lon: lon}, nil
-}
-
-func parseOrDefault(value string, fallback float64) (float64, error) {
-	if strings.TrimSpace(value) == "" {
-		return fallback, nil
-	}
-	return strconv.ParseFloat(value, 64)
 }
 
 func roundCoordinate(value float64) float64 {

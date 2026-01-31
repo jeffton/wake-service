@@ -10,8 +10,8 @@ Data is provided by the Norwegian Meteorological Institute (YR), https://api.met
 
 Query parameters:
 
-- `lat` (float, optional): Defaults to `55.7122`.
-- `lon` (float, optional): Defaults to `12.5890`.
+- `lat` (float, required).
+- `lon` (float, required).
 - `format` (optional): `json` (default) or `compact`.
 
 The response includes merged ocean + weather forecast data. The `compact` format uses arrays for each forecast entry. The `json` format uses objects with named keys.
