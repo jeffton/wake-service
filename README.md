@@ -89,7 +89,7 @@ Notes:
 - `userAgent` is required and must be a descriptive identifier for the MET API.
 - Location logging only happens for API keys with `allowLocationLog`.
 - Workout scheduling only works for API keys with `allowWorkout`.
-- If `delayMinutes` is omitted (or negative), it defaults to 3 minutes; `0` is allowed to run immediately.
+- If `delayMinutes` is omitted, it defaults to 3 minutes; `0` is allowed to run immediately.
 - The workout prompt is sent to OpenClaw with the activity count appended.
 
 ## Build & Run
