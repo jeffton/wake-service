@@ -10,17 +10,18 @@ type Position struct {
 type Coordinates [2]float64
 
 type Forecast struct {
-	Time           int64       `json:"time"`
-	SeaTemperature *float64    `json:"seaTemperature,omitempty"`
-	WaveHeight     *float64    `json:"waveHeight,omitempty"`
-	WaveDirection  *float64    `json:"waveDirection,omitempty"`
-	Temperature    *float64    `json:"temperature,omitempty"`
-	WindSpeed      *float64    `json:"windSpeed,omitempty"`
-	WindDirection  *float64    `json:"windDirection,omitempty"`
-	CloudCover     *CloudCover `json:"cloudCover,omitempty"`
-	Condition      *string     `json:"condition,omitempty"`
-	UvIndex        *float64    `json:"uvIndex,omitempty"`
-	Precipitation  *float64    `json:"precipitation,omitempty"`
+	Time                 string      `json:"time"`
+	TimeUnix             int64       `json:"-"`
+	SeaTemperature       *float64    `json:"seaTemperature,omitempty"`
+	WaveHeight           *float64    `json:"waveHeight,omitempty"`
+	WaveDirection        *float64    `json:"waveDirection,omitempty"`
+	Temperature          *float64    `json:"temperature,omitempty"`
+	WindSpeed            *float64    `json:"windSpeed,omitempty"`
+	WindDirection        *float64    `json:"windDirection,omitempty"`
+	CloudCover           *CloudCover `json:"cloudCover,omitempty"`
+	Condition            *string     `json:"condition,omitempty"`
+	UvIndex              *float64    `json:"uvIndex,omitempty"`
+	Precipitation12Hours *float64    `json:"precipitation12hours,omitempty"`
 }
 
 type CloudCover struct {

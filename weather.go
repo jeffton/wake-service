@@ -96,13 +96,13 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 				}
 
 				if entry.Data.Next12Hours.Details.ProbabilityOfPrecipitation != nil {
-					forecast.Precipitation = entry.Data.Next12Hours.Details.ProbabilityOfPrecipitation
+					forecast.Precipitation12Hours = entry.Data.Next12Hours.Details.ProbabilityOfPrecipitation
 				} else {
 					fallback := 0.0
 					if symbolImpliesPrecipitation(entry.Data.Next12Hours.Summary.SymbolCode) {
 						fallback = 100.0
 					}
-					forecast.Precipitation = &fallback
+					forecast.Precipitation12Hours = &fallback
 				}
 			}
 		}
@@ -111,7 +111,7 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 	forecastSlice := make([]Forecast, 0, len(forecasts))
 	for _, f := range forecasts {
 		if len(weatherTimes) > 0 {
-			if !weatherTimes[f.Time] {
+			if !weatherTimes[f.TimeUnix] {
 				continue
 			}
 		}
@@ -119,7 +119,7 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 	}
 
 	sort.Slice(forecastSlice, func(i, j int) bool {
-		return forecastSlice[i].Time < forecastSlice[j].Time
+		return forecastSlice[i].TimeUnix < forecastSlice[j].TimeUnix
 	})
 
 	response.Forecast = forecastSlice
@@ -161,7 +161,7 @@ func ensureForecast(cache map[int64]*Forecast, ts int64) *Forecast {
 	if existing, ok := cache[ts]; ok {
 		return existing
 	}
-	cache[ts] = &Forecast{Time: ts}
+	cache[ts] = &Forecast{TimeUnix: ts, Time: formatForecastTime(ts)}
 	return cache[ts]
 }
 
@@ -175,6 +175,10 @@ func appendResponseError(response *ApiResponseJSON, extra string) {
 
 func floatPtr(value float64) *float64 {
 	return &value
+}
+
+func formatForecastTime(ts int64) string {
+	return time.Unix(ts, 0).In(time.Local).Format("2006-01-02 15:04:05")
 }
 
 func buildCloudCover(entry WeatherTimeseriesEntry) *CloudCover {
@@ -271,7 +275,7 @@ func clampCloudCover(value float64) float64 {
 
 func forecastToArray(f Forecast) []any {
 	entry := make([]any, ForecastEntrySize)
-	entry[ForecastIdxTime] = f.Time
+	entry[ForecastIdxTime] = f.TimeUnix
 
 	if f.SeaTemperature != nil {
 		entry[ForecastIdxSeaTemperature] = *f.SeaTemperature
@@ -300,8 +304,8 @@ func forecastToArray(f Forecast) []any {
 	if f.UvIndex != nil {
 		entry[ForecastIdxUvIndex] = *f.UvIndex
 	}
-	if f.Precipitation != nil {
-		entry[ForecastIdxPrecipitation] = *f.Precipitation
+	if f.Precipitation12Hours != nil {
+		entry[ForecastIdxPrecipitation] = *f.Precipitation12Hours
 	}
 
 	return entry
@@ -309,7 +313,7 @@ func forecastToArray(f Forecast) []any {
 
 func forecastToCompactArray(f Forecast) []any {
 	entry := make([]any, ForecastEntrySize)
-	entry[ForecastIdxTime] = f.Time
+	entry[ForecastIdxTime] = f.TimeUnix
 
 	if f.SeaTemperature != nil {
 		entry[ForecastIdxSeaTemperature] = *f.SeaTemperature
@@ -335,8 +339,8 @@ func forecastToCompactArray(f Forecast) []any {
 	if f.UvIndex != nil {
 		entry[ForecastIdxUvIndex] = *f.UvIndex
 	}
-	if f.Precipitation != nil {
-		entry[ForecastIdxPrecipitation] = *f.Precipitation
+	if f.Precipitation12Hours != nil {
+		entry[ForecastIdxPrecipitation] = *f.Precipitation12Hours
 	}
 
 	return entry
