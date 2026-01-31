@@ -90,7 +90,7 @@ Notes:
 - Location logging only happens for API keys with `allowLocationLog`.
 - Workout scheduling only works for API keys with `allowWorkout`.
 - If `delayMinutes` is omitted, it defaults to 3 minutes; `0` is allowed to run immediately.
-- The workout prompt is sent to OpenClaw as-is (activity count is not appended).
+- The workout prompt is sent to OpenClaw as-is.
 
 ## Build & Run
 
