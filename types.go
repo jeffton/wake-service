@@ -10,17 +10,24 @@ type Position struct {
 type Coordinates [2]float64
 
 type Forecast struct {
-	Time           int64     `json:"time"`
-	SeaTemperature *float64  `json:"seaTemperature,omitempty"`
-	WaveHeight     *float64  `json:"waveHeight,omitempty"`
-	WaveDirection  *float64  `json:"waveDirection,omitempty"`
-	Temperature    *float64  `json:"temperature,omitempty"`
-	WindSpeed      *float64  `json:"windSpeed,omitempty"`
-	WindDirection  *float64  `json:"windDirection,omitempty"`
-	CloudCover     []float64 `json:"cloudCover,omitempty"`
-	Condition      *string   `json:"condition,omitempty"`
-	UvIndex        *float64  `json:"uvIndex,omitempty"`
-	Precipitation  *float64  `json:"precipitation,omitempty"`
+	Time           int64       `json:"time"`
+	SeaTemperature *float64    `json:"seaTemperature,omitempty"`
+	WaveHeight     *float64    `json:"waveHeight,omitempty"`
+	WaveDirection  *float64    `json:"waveDirection,omitempty"`
+	Temperature    *float64    `json:"temperature,omitempty"`
+	WindSpeed      *float64    `json:"windSpeed,omitempty"`
+	WindDirection  *float64    `json:"windDirection,omitempty"`
+	CloudCover     *CloudCover `json:"cloudCover,omitempty"`
+	Condition      *string     `json:"condition,omitempty"`
+	UvIndex        *float64    `json:"uvIndex,omitempty"`
+	Precipitation  *float64    `json:"precipitation,omitempty"`
+}
+
+type CloudCover struct {
+	Total  float64  `json:"total"`
+	Low    *float64 `json:"low,omitempty"`
+	Medium *float64 `json:"medium,omitempty"`
+	High   *float64 `json:"high,omitempty"`
 }
 
 type ApiResponseJSON struct {

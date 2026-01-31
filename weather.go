@@ -169,18 +169,12 @@ func floatPtr(value float64) *float64 {
 	return &value
 }
 
-func buildCloudCover(entry WeatherTimeseriesEntry) []float64 {
-	cloudCover := []float64{entry.Data.Instant.Details.CloudAreaFraction}
-	if entry.Data.Instant.Details.CloudAreaFractionLow != nil &&
-		entry.Data.Instant.Details.CloudAreaFractionMedium != nil &&
-		entry.Data.Instant.Details.CloudAreaFractionHigh != nil {
-		cloudCover = append(cloudCover,
-			*entry.Data.Instant.Details.CloudAreaFractionLow,
-			*entry.Data.Instant.Details.CloudAreaFractionMedium,
-			*entry.Data.Instant.Details.CloudAreaFractionHigh,
-		)
-	}
-	return cloudCover
+func buildCloudCover(entry WeatherTimeseriesEntry) *CloudCover {
+	cover := &CloudCover{Total: entry.Data.Instant.Details.CloudAreaFraction}
+	cover.Low = entry.Data.Instant.Details.CloudAreaFractionLow
+	cover.Medium = entry.Data.Instant.Details.CloudAreaFractionMedium
+	cover.High = entry.Data.Instant.Details.CloudAreaFractionHigh
+	return cover
 }
 
 func mapSymbolToCondition(symbolCode string, entry WeatherTimeseriesEntry) string {
@@ -289,8 +283,8 @@ func forecastToArray(f Forecast) []any {
 	if f.WindDirection != nil {
 		entry[ForecastIdxWindDirection] = *f.WindDirection
 	}
-	if len(f.CloudCover) > 0 {
-		entry[ForecastIdxCloudCover] = f.CloudCover
+	if f.CloudCover != nil {
+		entry[ForecastIdxCloudCover] = cloudCoverToArray(f.CloudCover)
 	}
 	if f.Condition != nil {
 		entry[ForecastIdxCondition] = *f.Condition
@@ -303,6 +297,14 @@ func forecastToArray(f Forecast) []any {
 	}
 
 	return entry
+}
+
+func cloudCoverToArray(cloudCover *CloudCover) []float64 {
+	values := []float64{cloudCover.Total}
+	if cloudCover.Low != nil && cloudCover.Medium != nil && cloudCover.High != nil {
+		values = append(values, *cloudCover.Low, *cloudCover.Medium, *cloudCover.High)
+	}
+	return values
 }
 
 func symbolImpliesPrecipitation(symbolCode string) bool {
