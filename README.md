@@ -48,10 +48,16 @@ Request body:
 }
 ```
 
-Response:
+Response (success):
 
 ```json
 { "ok": true }
+```
+
+Response (error):
+
+```json
+{ "ok": false, "error": "..." }
 ```
 
 ## Options file
