@@ -25,8 +25,8 @@ Weather conditions are interpreted server-side, including cloud overlays and hea
 - `partly cloudy 60`
 - `partly cloudy 80`
 - `cloudy`
-- `cloudy low`
-- `cloudy high`
+- `heavy clouds`
+- `high clouds`
 - `light rain`
 - `rain`
 - `thunder`
