@@ -39,6 +39,7 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 	}
 
 	forecasts := make(map[int64]*Forecast)
+	weatherTimes := make(map[int64]bool)
 
 	if oceanData != nil {
 		if len(oceanData.Geometry.Coordinates) >= 2 {
@@ -81,6 +82,7 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 					continue
 				}
 				ts := parsedTime.Unix()
+				weatherTimes[ts] = true
 				forecast := ensureForecast(forecasts, ts)
 				forecast.Temperature = floatPtr(entry.Data.Instant.Details.AirTemperature)
 				forecast.WindSpeed = floatPtr(entry.Data.Instant.Details.WindSpeed)
@@ -108,6 +110,11 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 
 	forecastSlice := make([]Forecast, 0, len(forecasts))
 	for _, f := range forecasts {
+		if len(weatherTimes) > 0 {
+			if !weatherTimes[f.Time] {
+				continue
+			}
+		}
 		forecastSlice = append(forecastSlice, *f)
 	}
 
