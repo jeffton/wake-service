@@ -32,12 +32,31 @@ type CloudCover struct {
 }
 
 type ApiResponseJSON struct {
-	RequestPosition       Coordinates  `json:"requestPosition"`
-	ForecastPosition      *Coordinates `json:"forecastPosition,omitempty"`
-	OceanForecastPosition *Coordinates `json:"oceanForecastPosition,omitempty"`
-	RequestTime           int64        `json:"requestTime"`
-	Forecast              []Forecast   `json:"forecast,omitempty"`
-	Error                 interface{}  `json:"error,omitempty"`
+	Meta                  *ResponseMeta `json:"meta,omitempty"`
+	RequestPosition       Coordinates   `json:"requestPosition"`
+	ForecastPosition      *Coordinates  `json:"forecastPosition,omitempty"`
+	OceanForecastPosition *Coordinates  `json:"oceanForecastPosition,omitempty"`
+	RequestTime           int64         `json:"requestTime"`
+	Forecast              []Forecast    `json:"forecast,omitempty"`
+	Error                 interface{}   `json:"error,omitempty"`
+}
+
+type ResponseMeta struct {
+	Units ForecastUnits `json:"units"`
+}
+
+type ForecastUnits struct {
+	Time                 string `json:"time"`
+	SeaTemperature       string `json:"seaTemperature"`
+	WaveHeight           string `json:"waveHeight"`
+	WaveDirection        string `json:"waveDirection"`
+	Temperature          string `json:"temperature"`
+	WindSpeed            string `json:"windSpeed"`
+	WindDirection        string `json:"windDirection"`
+	CloudCover           string `json:"cloudCover"`
+	Condition            string `json:"condition"`
+	UvIndex              string `json:"uvIndex"`
+	Precipitation12Hours string `json:"precipitation12hours"`
 }
 
 type ApiResponseCompact struct {

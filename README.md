@@ -15,7 +15,7 @@ Query parameters:
 - `format` (optional): `json` (default) or `compact`.
 - `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
 
-The response includes merged ocean + weather forecast data. Times without location forecast data (ocean-only samples) are omitted. The `compact` format uses arrays for each forecast entry (limited to 12 entries and omits cloud cover). The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available; it returns all available forecast times. JSON timestamps are formatted in local time, and precipitation is reported as `precipitation12hours`.
+The response includes merged ocean + weather forecast data. Times without location forecast data (ocean-only samples) are omitted. The `compact` format uses arrays for each forecast entry (limited to 12 entries and omits cloud cover). The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available; it returns all available forecast times. JSON timestamps are formatted in local time, precipitation is reported as `precipitation12hours`, and `meta.units` describes the units.
 
 Weather conditions are interpreted server-side, including cloud overlays and heavy/high cloud variants. The `condition` values are:
 

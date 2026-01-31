@@ -30,6 +30,21 @@ const (
 
 func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrResponse, requestPos Position, errors []string) ApiResponseJSON {
 	response := ApiResponseJSON{
+		Meta: &ResponseMeta{
+			Units: ForecastUnits{
+				Time:                 "local",
+				SeaTemperature:       "celsius",
+				WaveHeight:           "meters",
+				WaveDirection:        "degrees",
+				Temperature:          "celsius",
+				WindSpeed:            "m/s",
+				WindDirection:        "degrees",
+				CloudCover:           "percent",
+				Condition:            "text",
+				UvIndex:              "index",
+				Precipitation12Hours: "percent",
+			},
+		},
 		RequestPosition: Coordinates{requestPos.Lat, requestPos.Lon},
 		RequestTime:     time.Now().Unix(),
 	}
