@@ -22,7 +22,7 @@ func (s *Server) scheduleOpenClaw(activityCount int64) error {
 	if config.URL == "" || config.Token == "" {
 		return fmt.Errorf("openclaw is not configured")
 	}
-	if config.DelayMinutes <= 0 {
+	if config.DelayMinutes < 0 {
 		config.DelayMinutes = 3
 	}
 	if strings.TrimSpace(config.Prompt) == "" {
