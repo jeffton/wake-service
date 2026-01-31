@@ -210,9 +210,6 @@ func mapSymbolToCondition(symbolCode string, entry WeatherTimeseriesEntry) strin
 	}
 
 	lowerSymbol := strings.ToLower(symbolCode)
-	if strings.Contains(lowerSymbol, "storm") {
-		return "storm"
-	}
 	if strings.Contains(lowerSymbol, "thunder") {
 		return "thunder"
 	}
