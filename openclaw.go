@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -26,7 +25,8 @@ func (s *Server) scheduleOpenClaw(activityCount int64) error {
 		config.Prompt = "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
 	}
 
-	text := fmt.Sprintf("%s Activity count today: %d.", strings.TrimSpace(config.Prompt), activityCount)
+	_ = activityCount
+	text := strings.TrimSpace(config.Prompt)
 	payload := openClawRequestPayload{
 		Job: openClawJob{
 			Name: "Garmin activity feedback",
