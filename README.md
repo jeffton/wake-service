@@ -1,2 +1,98 @@
-# wake-service
-Weather service for Garmin watchface + Moltbot integration
+# Wake Service
+
+Wake is a small Go service that proxies the MET Norway (YR) ocean and location forecasts, adds caching, and exposes a compact or JSON-readable format for clients like Garmin watch faces and AI agents. It also supports logging watch locations and scheduling OpenClaw prompts after a workout.
+
+Data is provided by the Norwegian Meteorological Institute (YR), https://api.met.no.
+
+## Endpoints
+
+### `GET /weather`
+
+Query parameters:
+
+- `lat` (float, optional): Defaults to `55.7122`.
+- `lon` (float, optional): Defaults to `12.5890`.
+- `format` (optional): `json` (default) or `compact`.
+
+The response includes merged ocean + weather forecast data. The `compact` format uses arrays for each forecast entry. The `json` format uses objects with named keys.
+
+Weather conditions are interpreted server-side, including cloud overlays and heavy/high cloud variants. The `condition` values are:
+
+- `clear`
+- `fair`
+- `partly cloudy 20`
+- `partly cloudy 40`
+- `partly cloudy 60`
+- `partly cloudy 80`
+- `cloudy`
+- `cloudy low`
+- `cloudy high`
+- `light rain`
+- `rain`
+- `thunder`
+- `snow`
+- `hail`
+- `fog`
+
+### `POST /workout`
+
+Schedules an OpenClaw cron job for activity feedback.
+
+Request body:
+
+```json
+{
+  "activityCount": 2
+}
+```
+
+Response:
+
+```json
+{ "ok": true }
+```
+
+## Options file
+
+The service reads configuration from a JSON file. Set the path with `WAKE_OPTIONS_PATH`. Defaults:
+
+- Linux: `/etc/wake-service/options.json`
+- macOS: `~/Library/Application Support/wake-service/options.json`
+
+Example:
+
+```json
+{
+  "userAgent": "Wake/1.0 (you@example.com)",
+  "locationLogPath": "/var/log/wake/location.json",
+  "apiKeys": [
+    {
+      "name": "watch",
+      "key": "change-me",
+      "allowLocationLog": true,
+      "allowWorkout": true
+    }
+  ],
+  "openClaw": {
+    "url": "http://localhost:18789",
+    "token": "replace-with-token",
+    "delayMinutes": 3,
+    "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
+  }
+}
+```
+
+Notes:
+
+- `userAgent` is required and must be a descriptive identifier for the MET API.
+- Location logging only happens for API keys with `allowLocationLog`.
+- Workout scheduling only works for API keys with `allowWorkout`.
+- If `delayMinutes` is omitted or `0`, it defaults to 3 minutes.
+- The workout prompt is sent to OpenClaw with the activity count appended.
+
+## Build & Run
+
+```bash
+go build ./...
+PORT=8080 ./wake-service
+```
