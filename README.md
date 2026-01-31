@@ -15,7 +15,7 @@ Query parameters:
 - `format` (optional): `json` (default) or `compact`.
 - `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
 
-The response includes merged ocean + weather forecast data. The `compact` format uses arrays for each forecast entry. The `json` format uses objects with named keys.
+The response includes merged ocean + weather forecast data. The `compact` format uses arrays for each forecast entry. The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available.
 
 Weather conditions are interpreted server-side, including cloud overlays and heavy/high cloud variants. The `condition` values are:
 
