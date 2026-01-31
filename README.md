@@ -13,6 +13,7 @@ Query parameters:
 - `lat` (float, required).
 - `lon` (float, required).
 - `format` (optional): `json` (default) or `compact`.
+- `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
 
 The response includes merged ocean + weather forecast data. The `compact` format uses arrays for each forecast entry. The `json` format uses objects with named keys.
 

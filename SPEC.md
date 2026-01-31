@@ -9,7 +9,7 @@ The interpretation of the weather should move from the Garmin watch face to the 
 Read the watchface implementation for reference but do not fix the watchface to match the server yet: 
 /Users/dt/Github/undertow-watchface/Undertow
 
-The wake service will keep the proxys feature to log the location to a file, but only when called from the watch. We will set API keys in the options file where location logging can be enabled or disabled for each key (treat those keys as the watch callers).
+The wake service will keep the proxys feature to log the location to a file, but only when called from the watch. We will set API keys in the options file where location logging can be enabled or disabled for each key (treat those keys as the watch callers). Add a logLocation query param to /weather to trigger logging when allowed.
 
 Add caching of forecasts. Forecasts should be cached for one hour with the GPS coordinates (four decimals) as key. Make sure a cached entry can be used to return both formats.
 

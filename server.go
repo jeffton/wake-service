@@ -70,7 +70,7 @@ func (s *Server) handleWeather(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if key.ApiKey.AllowLocationLog {
+	if key.ApiKey.AllowLocationLog && shouldLogLocation(r) {
 		if err := writeLocation(s.options.LocationLogPath, pos); err != nil {
 			log.Printf("Failed to write location: %v", err)
 		}
@@ -239,6 +239,16 @@ func parseFormat(r *http.Request) string {
 		return format
 	}
 	return ""
+}
+
+func shouldLogLocation(r *http.Request) bool {
+	value := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("logLocation")))
+	switch value {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
