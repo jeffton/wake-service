@@ -30,7 +30,6 @@ Weather conditions are interpreted server-side, including cloud overlays and hea
 - `high clouds`
 - `light rain`
 - `rain`
-- `storm`
 - `thunder`
 - `snow`
 - `hail`
