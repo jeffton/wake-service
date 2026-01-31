@@ -238,10 +238,10 @@ func interpretClouds(total float64, low, medium *float64) string {
 	total = clampCloudCover(total)
 	if total >= 90 {
 		if low != nil && *low >= 70 {
-			return "cloudy low"
+			return "heavy clouds"
 		}
 		if low != nil && medium != nil && *low < 50 && *medium < 50 {
-			return "cloudy high"
+			return "high clouds"
 		}
 		return "cloudy"
 	}
