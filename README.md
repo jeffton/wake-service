@@ -49,30 +49,6 @@ Query parameters:
 
 When `lastWorkout` differs from the stored value (and is non-zero), the service schedules the OpenClaw prompt (requires an API key with workout permissions).
 
-### `POST /workout`
-
-Schedules an OpenClaw cron job for activity feedback.
-
-Request body:
-
-```json
-{
-  "activityCount": 2
-}
-```
-
-Response (success):
-
-```json
-{ "ok": true }
-```
-
-Response (error):
-
-```json
-{ "ok": false, "error": "..." }
-```
-
 ## Options file
 
 The service reads configuration from a JSON file. Set the path with `WAKE_OPTIONS_PATH`. Defaults:
