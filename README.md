@@ -85,7 +85,8 @@ Example:
 ```json
 {
   "userAgent": "Wake/1.0 (you@example.com)",
-  "locationLogPath": "/var/log/wake/location.json",
+  "locationLogPath": "/var/wake-service/location.json",
+  "syncStatePath": "/var/wake-service/sync-state.json",
   "apiKeys": [
     {
       "name": "watch",
