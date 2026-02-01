@@ -35,6 +35,20 @@ Weather conditions are interpreted server-side, including cloud overlays and hea
 - `hail`
 - `fog`
 
+### `GET /sync`
+
+Returns the same weather response as `/weather` and optionally schedules OpenClaw when the workout marker changes.
+
+Query parameters:
+
+- `lat` (float, required).
+- `lon` (float, required).
+- `format` (optional): `json` (default) or `compact`.
+- `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
+- `lastWorkout` (int, required): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value.
+
+When `lastWorkout` differs from the stored value, the service schedules the OpenClaw prompt (requires an API key with workout permissions).
+
 ### `POST /workout`
 
 Schedules an OpenClaw cron job for activity feedback.

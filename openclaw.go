@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (s *Server) scheduleOpenClaw(activityCount int64) error {
+func (s *Server) scheduleOpenClaw() error {
 	config := s.options.OpenClaw
 	if config.URL == "" || config.Token == "" {
 		return fmt.Errorf("openclaw is not configured")
@@ -18,7 +18,6 @@ func (s *Server) scheduleOpenClaw(activityCount int64) error {
 		config.Prompt = "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
 	}
 
-	_ = activityCount
 	text := strings.TrimSpace(config.Prompt)
 	payload := openClawRequestPayload{
 		Job: openClawJob{

@@ -97,14 +97,14 @@ func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workouts, workoutDate, err := parseSyncWorkoutParams(r)
+	lastWorkout, err := parseSyncWorkoutParam(r)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	response := s.weatherResponse(r, key, pos)
-	if err := s.syncWorkouts(workoutDate, workouts); err != nil {
+	if err := s.syncWorkouts(lastWorkout); err != nil {
 		appendResponseError(&response, fmt.Sprintf("openclaw error: %v", err))
 	}
 
