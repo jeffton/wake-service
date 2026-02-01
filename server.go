@@ -36,7 +36,7 @@ func NewServer(options Options) *Server {
 
 func (s *Server) routes() {
 	http.HandleFunc("/weather", s.handleWeather)
-	http.HandleFunc("/workout", s.handleWorkout)
+	http.HandleFunc("/sync", s.handleSync)
 }
 
 func (s *Server) handleWeather(w http.ResponseWriter, r *http.Request) {
@@ -64,10 +64,57 @@ func (s *Server) handleWeather(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := s.weatherResponse(r, key, pos)
+	s.writeWeatherResponse(w, format, response)
+}
+
+func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	key, ok := authenticate(s.options, r)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if !key.ApiKey.AllowWorkout {
+		writeJSONError(w, http.StatusForbidden, "workout not allowed for this api key")
+		return
+	}
+
+	pos, err := getPosition(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	format := parseFormat(r)
+	if format == "" {
+		http.Error(w, "invalid format (use json or compact)", http.StatusBadRequest)
+		return
+	}
+
+	workouts, workoutDate, workoutDateStr, err := parseSyncWorkoutParams(r)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response := s.weatherResponse(r, key, pos)
+	if err := s.syncWorkouts(workoutDate, workoutDateStr, workouts); err != nil {
+		appendResponseError(&response, fmt.Sprintf("openclaw error: %v", err))
+	}
+
+	s.writeWeatherResponse(w, format, response)
+}
+
+func (s *Server) weatherResponse(r *http.Request, key *AuthenticatedKey, pos Position) ApiResponseJSON {
 	cacheKey := cacheKeyForPosition(pos)
 	if cached, ok := s.cache.Get(cacheKey, cacheTTL); ok {
-		s.writeWeatherResponse(w, format, cached)
-		return
+		return cached
 	}
 
 	if key.ApiKey.AllowLocationLog && shouldLogLocation(r) {
@@ -83,7 +130,7 @@ func (s *Server) handleWeather(w http.ResponseWriter, r *http.Request) {
 		s.cache.Set(cacheKey, response)
 	}
 
-	s.writeWeatherResponse(w, format, response)
+	return response
 }
 
 func (s *Server) writeWeatherResponse(w http.ResponseWriter, format string, response ApiResponseJSON) {
@@ -146,57 +193,6 @@ func (s *Server) fetchForecasts(pos Position) (*OceanYrResponse, *WeatherYrRespo
 	wg.Wait()
 
 	return oceanData, weatherData, errors
-}
-
-func (s *Server) handleWorkout(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-
-	key, ok := authenticate(s.options, r)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	if !key.ApiKey.AllowWorkout {
-		writeJSONError(w, http.StatusForbidden, "workout not allowed for this api key")
-		return
-	}
-
-	payload, err := decodeWorkoutRequest(r)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if err := s.scheduleOpenClaw(payload.ActivityCount); err != nil {
-		writeJSONError(w, http.StatusBadGateway, err.Error())
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
-}
-
-func decodeWorkoutRequest(r *http.Request) (WorkoutRequest, error) {
-	var payload workoutPayload
-	decoder := json.NewDecoder(r.Body)
-	decoder.UseNumber()
-	if err := decoder.Decode(&payload); err != nil {
-		return WorkoutRequest{}, fmt.Errorf("invalid json: %w", err)
-	}
-	if payload.ActivityCount == "" {
-		return WorkoutRequest{}, errors.New("activityCount is required")
-	}
-	count, err := payload.ActivityCount.Int64()
-	if err != nil {
-		return WorkoutRequest{}, errors.New("activityCount must be a number")
-	}
-	if count < 0 {
-		return WorkoutRequest{}, errors.New("activityCount must be a positive number")
-	}
-	return WorkoutRequest{ActivityCount: count}, nil
 }
 
 func getPosition(r *http.Request) (Position, error) {
