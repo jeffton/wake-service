@@ -12,48 +12,43 @@ import (
 	"time"
 )
 
-const workoutDateLayout = "2006-01-02"
-
 type WorkoutSyncState struct {
-	Date     string `json:"date"`
-	Workouts int64  `json:"workouts"`
+	Date     int64 `json:"date"`
+	Workouts int64 `json:"workouts"`
 }
 
-func parseSyncWorkoutParams(r *http.Request) (int64, time.Time, string, error) {
+func parseSyncWorkoutParams(r *http.Request) (int64, int64, error) {
 	dateStr := strings.TrimSpace(r.URL.Query().Get("date"))
 	if dateStr == "" {
-		return 0, time.Time{}, "", errors.New("date is required")
+		return 0, 0, errors.New("date is required")
 	}
-	dateValue, err := time.ParseInLocation(workoutDateLayout, dateStr, time.Local)
+	dateValue, err := strconv.ParseInt(dateStr, 10, 64)
 	if err != nil {
-		return 0, time.Time{}, "", fmt.Errorf("invalid date (use YYYY-MM-DD): %w", err)
+		return 0, 0, fmt.Errorf("invalid date value: %w", err)
 	}
 
 	workoutsStr := strings.TrimSpace(r.URL.Query().Get("workouts"))
 	if workoutsStr == "" {
-		return 0, time.Time{}, "", errors.New("workouts is required")
+		return 0, 0, errors.New("workouts is required")
 	}
 	workouts, err := strconv.ParseInt(workoutsStr, 10, 64)
 	if err != nil {
-		return 0, time.Time{}, "", fmt.Errorf("invalid workouts count: %w", err)
+		return 0, 0, fmt.Errorf("invalid workouts count: %w", err)
 	}
 	if workouts < 0 {
-		return 0, time.Time{}, "", errors.New("workouts must be a positive number")
+		return 0, 0, errors.New("workouts must be a positive number")
 	}
 
-	return workouts, dateValue, dateValue.Format(workoutDateLayout), nil
+	return workouts, dateValue, nil
 }
 
-func (s *Server) syncWorkouts(date time.Time, dateStr string, workouts int64) error {
+func (s *Server) syncWorkouts(date int64, workouts int64) error {
 	state, exists, err := loadWorkoutSyncState(s.options.SyncStatePath)
 	if err != nil {
 		return err
 	}
 
-	shouldTrigger, nextState, shouldUpdate, err := evaluateWorkoutSyncState(state, exists, date, dateStr, workouts)
-	if err != nil {
-		return err
-	}
+	shouldTrigger, nextState, shouldUpdate := evaluateWorkoutSyncState(state, exists, date, workouts)
 
 	if shouldTrigger {
 		if err := s.scheduleOpenClaw(workouts); err != nil {
@@ -70,40 +65,32 @@ func (s *Server) syncWorkouts(date time.Time, dateStr string, workouts int64) er
 	return nil
 }
 
-func evaluateWorkoutSyncState(state WorkoutSyncState, exists bool, date time.Time, dateStr string, workouts int64) (bool, WorkoutSyncState, bool, error) {
+func evaluateWorkoutSyncState(state WorkoutSyncState, exists bool, date int64, workouts int64) (bool, WorkoutSyncState, bool) {
 	shouldTrigger := false
 	shouldUpdate := false
-	isToday := dateStr == time.Now().In(time.Local).Format(workoutDateLayout)
 
 	if !exists {
-		if workouts > 0 && isToday {
+		if workouts > 0 {
 			shouldTrigger = true
 		}
-		return shouldTrigger, WorkoutSyncState{Date: dateStr, Workouts: workouts}, true, nil
-	}
-
-	stateDate, err := time.ParseInLocation(workoutDateLayout, state.Date, time.Local)
-	if err != nil {
-		return false, state, false, fmt.Errorf("invalid sync state date %q: %w", state.Date, err)
+		return shouldTrigger, WorkoutSyncState{Date: date, Workouts: workouts}, true
 	}
 
 	switch {
-	case date.Before(stateDate):
-		return false, state, false, nil
-	case date.After(stateDate):
-		if workouts > 0 && isToday {
+	case date < state.Date:
+		return false, state, false
+	case date > state.Date:
+		if workouts > 0 {
 			shouldTrigger = true
 		}
-		return shouldTrigger, WorkoutSyncState{Date: dateStr, Workouts: workouts}, true, nil
+		return shouldTrigger, WorkoutSyncState{Date: date, Workouts: workouts}, true
 	default:
 		if workouts > state.Workouts {
 			shouldUpdate = true
 			state.Workouts = workouts
-			if isToday {
-				shouldTrigger = true
-			}
+			shouldTrigger = true
 		}
-		return shouldTrigger, state, shouldUpdate, nil
+		return shouldTrigger, state, shouldUpdate
 	}
 }
 
