@@ -52,6 +52,10 @@ func (s *Server) syncWorkouts(lastWorkout int64) error {
 }
 
 func evaluateWorkoutSyncState(state WorkoutSyncState, exists bool, lastWorkout int64) (bool, WorkoutSyncState, bool) {
+	if lastWorkout == 0 {
+		return false, state, false
+	}
+
 	if !exists {
 		return true, WorkoutSyncState{LastWorkout: lastWorkout}, true
 	}

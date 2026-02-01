@@ -45,9 +45,9 @@ Query parameters:
 - `lon` (float, required).
 - `format` (optional): `json` (default) or `compact`.
 - `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
-- `lastWorkout` (int, required): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value.
+- `lastWorkout` (int, required): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value. `0` is treated as "no workout" and is ignored.
 
-When `lastWorkout` differs from the stored value, the service schedules the OpenClaw prompt (requires an API key with workout permissions).
+When `lastWorkout` differs from the stored value (and is non-zero), the service schedules the OpenClaw prompt (requires an API key with workout permissions).
 
 ### `POST /workout`
 
