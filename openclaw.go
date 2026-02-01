@@ -8,8 +8,8 @@ import (
 
 func (s *Server) scheduleOpenClaw() error {
 	config := s.options.OpenClaw
-	if config.URL == "" || config.Token == "" {
-		return fmt.Errorf("openclaw is not configured")
+	if config.Token == "" {
+		return fmt.Errorf("openclaw is not configured (missing token)")
 	}
 
 	text := strings.TrimSpace(config.Prompt)
@@ -17,17 +17,18 @@ func (s *Server) scheduleOpenClaw() error {
 		text = "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
 	}
 
-	// Convert http:// to ws:// for CLI
-	wsURL := config.URL
-	wsURL = strings.Replace(wsURL, "http://", "ws://", 1)
-	wsURL = strings.Replace(wsURL, "https://", "wss://", 1)
-
-	cmd := exec.Command("openclaw", "system", "event",
+	args := []string{"system", "event",
 		"--text", text,
 		"--mode", "now",
-		"--url", wsURL,
 		"--token", config.Token,
-	)
+	}
+
+	// Only add --url if explicitly configured
+	if config.URL != "" {
+		args = append(args, "--url", config.URL)
+	}
+
+	cmd := exec.Command("openclaw", args...)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

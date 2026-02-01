@@ -96,7 +96,7 @@ Example:
     }
   ],
   "openClaw": {
-    "url": "http://localhost:18789",
+    "url": "ws://localhost:18789",
     "token": "replace-with-token",
     "delayMinutes": 3,
     "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
@@ -111,6 +111,7 @@ Notes:
 - Workout scheduling only works for API keys with `allowWorkout`.
 - If `delayMinutes` is omitted, it defaults to 3 minutes; `0` is allowed to run immediately.
 - The workout prompt is sent to OpenClaw as-is.
+- `openClaw.url` can be omitted if OpenClaw runs on the same machine; the CLI will auto-discover the local gateway.
 
 ## Build & Run
 
