@@ -18,6 +18,7 @@ const (
 type Options struct {
 	UserAgent       string          `json:"userAgent"`
 	LocationLogPath string          `json:"locationLogPath"`
+	SyncStatePath   string          `json:"syncStatePath"`
 	ApiKeys         []ApiKey        `json:"apiKeys"`
 	OpenClaw        OpenClawOptions `json:"openClaw"`
 }
@@ -54,6 +55,10 @@ func loadOptions() (Options, error) {
 
 	if len(options.ApiKeys) == 0 {
 		return Options{}, fmt.Errorf("apiKeys must be set in options file %s", path)
+	}
+
+	if options.SyncStatePath == "" {
+		options.SyncStatePath = filepath.Join(filepath.Dir(path), "sync-state.json")
 	}
 
 	return options, nil

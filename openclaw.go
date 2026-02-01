@@ -9,14 +9,6 @@ import (
 	"time"
 )
 
-type WorkoutRequest struct {
-	ActivityCount int64 `json:"activityCount"`
-}
-
-type workoutPayload struct {
-	ActivityCount json.Number `json:"activityCount"`
-}
-
 func (s *Server) scheduleOpenClaw(activityCount int64) error {
 	config := s.options.OpenClaw
 	if config.URL == "" || config.Token == "" {
