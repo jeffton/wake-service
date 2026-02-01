@@ -112,15 +112,15 @@ func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) weatherResponse(r *http.Request, key *AuthenticatedKey, pos Position) ApiResponseJSON {
-	cacheKey := cacheKeyForPosition(pos)
-	if cached, ok := s.cache.Get(cacheKey, cacheTTL); ok {
-		return cached
-	}
-
 	if key.ApiKey.AllowLocationLog && shouldLogLocation(r) {
 		if err := writeLocation(s.options.LocationLogPath, pos); err != nil {
 			log.Printf("Failed to write location: %v", err)
 		}
+	}
+
+	cacheKey := cacheKeyForPosition(pos)
+	if cached, ok := s.cache.Get(cacheKey, cacheTTL); ok {
+		return cached
 	}
 
 	oceanData, weatherData, errors := s.fetchForecasts(pos)
