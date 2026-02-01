@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
+	"os/exec"
 	"strings"
-	"time"
 )
 
 func (s *Server) scheduleOpenClaw() error {
@@ -14,73 +11,28 @@ func (s *Server) scheduleOpenClaw() error {
 	if config.URL == "" || config.Token == "" {
 		return fmt.Errorf("openclaw is not configured")
 	}
-	if strings.TrimSpace(config.Prompt) == "" {
-		config.Prompt = "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
-	}
 
 	text := strings.TrimSpace(config.Prompt)
-	payload := openClawRequestPayload{
-		Job: openClawJob{
-			Name: "Garmin activity feedback",
-			Schedule: openClawSchedule{
-				Kind: "at",
-				At:   time.Now().Add(time.Duration(config.DelayMinutes) * time.Minute).UnixMilli(),
-			},
-			SessionTarget: "main",
-			WakeMode:      "now",
-			Payload: openClawJobPayload{
-				Kind: "systemEvent",
-				Text: text,
-			},
-			DeleteAfterRun: true,
-		},
+	if text == "" {
+		text = "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
 	}
 
-	body, err := json.Marshal(payload)
+	// Convert http:// to ws:// for CLI
+	wsURL := config.URL
+	wsURL = strings.Replace(wsURL, "http://", "ws://", 1)
+	wsURL = strings.Replace(wsURL, "https://", "wss://", 1)
+
+	cmd := exec.Command("openclaw", "system", "event",
+		"--text", text,
+		"--mode", "now",
+		"--url", wsURL,
+		"--token", config.Token,
+	)
+
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("encode openclaw payload: %w", err)
-	}
-
-	url := strings.TrimRight(config.URL, "/") + "/api/cron/add"
-	request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("create openclaw request: %w", err)
-	}
-	request.Header.Set("Authorization", "Bearer "+config.Token)
-	request.Header.Set("Content-Type", "application/json")
-
-	response, err := s.httpClient.Do(request)
-	if err != nil {
-		return fmt.Errorf("openclaw request failed: %w", err)
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return fmt.Errorf("openclaw returned status %s", response.Status)
+		return fmt.Errorf("openclaw CLI failed: %w, output: %s", err, string(output))
 	}
 
 	return nil
-}
-
-type openClawRequestPayload struct {
-	Job openClawJob `json:"job"`
-}
-
-type openClawJob struct {
-	Name           string             `json:"name"`
-	Schedule       openClawSchedule   `json:"schedule"`
-	SessionTarget  string             `json:"sessionTarget"`
-	WakeMode       string             `json:"wakeMode"`
-	Payload        openClawJobPayload `json:"payload"`
-	DeleteAfterRun bool               `json:"deleteAfterRun"`
-}
-
-type openClawSchedule struct {
-	Kind string `json:"kind"`
-	At   int64  `json:"at"`
-}
-
-type openClawJobPayload struct {
-	Kind string `json:"kind"`
-	Text string `json:"text"`
 }
