@@ -28,6 +28,20 @@ const (
 	ForecastEntrySize
 )
 
+const (
+	CompactForecastIdxTime = iota
+	CompactForecastIdxSeaTemperature
+	CompactForecastIdxWaveHeight
+	CompactForecastIdxWaveDirection
+	CompactForecastIdxTemperature
+	CompactForecastIdxWindSpeed
+	CompactForecastIdxWindDirection
+	CompactForecastIdxCondition
+	CompactForecastIdxUvIndex
+	CompactForecastIdxPrecipitation
+	CompactForecastEntrySize
+)
+
 func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrResponse, requestPos Position, errors []string) ApiResponseJSON {
 	response := ApiResponseJSON{
 		Meta: &ResponseMeta{
@@ -324,35 +338,35 @@ func forecastToArray(f Forecast) []any {
 }
 
 func forecastToCompactArray(f Forecast) []any {
-	entry := make([]any, ForecastEntrySize)
-	entry[ForecastIdxTime] = f.TimeUnix
+	entry := make([]any, CompactForecastEntrySize)
+	entry[CompactForecastIdxTime] = f.TimeUnix
 
 	if f.SeaTemperature != nil {
-		entry[ForecastIdxSeaTemperature] = *f.SeaTemperature
+		entry[CompactForecastIdxSeaTemperature] = *f.SeaTemperature
 	}
 	if f.WaveHeight != nil {
-		entry[ForecastIdxWaveHeight] = *f.WaveHeight
+		entry[CompactForecastIdxWaveHeight] = *f.WaveHeight
 	}
 	if f.WaveDirection != nil {
-		entry[ForecastIdxWaveDirection] = *f.WaveDirection
+		entry[CompactForecastIdxWaveDirection] = *f.WaveDirection
 	}
 	if f.Temperature != nil {
-		entry[ForecastIdxTemperature] = *f.Temperature
+		entry[CompactForecastIdxTemperature] = *f.Temperature
 	}
 	if f.WindSpeed != nil {
-		entry[ForecastIdxWindSpeed] = *f.WindSpeed
+		entry[CompactForecastIdxWindSpeed] = *f.WindSpeed
 	}
 	if f.WindDirection != nil {
-		entry[ForecastIdxWindDirection] = *f.WindDirection
+		entry[CompactForecastIdxWindDirection] = *f.WindDirection
 	}
 	if f.Condition != nil {
-		entry[ForecastIdxCondition] = *f.Condition
+		entry[CompactForecastIdxCondition] = *f.Condition
 	}
 	if f.UvIndex != nil {
-		entry[ForecastIdxUvIndex] = *f.UvIndex
+		entry[CompactForecastIdxUvIndex] = *f.UvIndex
 	}
 	if f.Precipitation12Hours != nil {
-		entry[ForecastIdxPrecipitation] = *f.Precipitation12Hours
+		entry[CompactForecastIdxPrecipitation] = *f.Precipitation12Hours
 	}
 
 	return entry
