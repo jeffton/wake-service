@@ -21,25 +21,11 @@ const (
 	ForecastIdxTemperature
 	ForecastIdxWindSpeed
 	ForecastIdxWindDirection
-	ForecastIdxCloudCover
 	ForecastIdxCondition
 	ForecastIdxUvIndex
 	ForecastIdxPrecipitation
+	ForecastIdxCloudCover
 	ForecastEntrySize
-)
-
-const (
-	CompactForecastIdxTime = iota
-	CompactForecastIdxSeaTemperature
-	CompactForecastIdxWaveHeight
-	CompactForecastIdxWaveDirection
-	CompactForecastIdxTemperature
-	CompactForecastIdxWindSpeed
-	CompactForecastIdxWindDirection
-	CompactForecastIdxCondition
-	CompactForecastIdxUvIndex
-	CompactForecastIdxPrecipitation
-	CompactForecastEntrySize
 )
 
 func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrResponse, requestPos Position, errors []string) ApiResponseJSON {
@@ -321,9 +307,6 @@ func forecastToArray(f Forecast) []any {
 	if f.WindDirection != nil {
 		entry[ForecastIdxWindDirection] = *f.WindDirection
 	}
-	if f.CloudCover != nil {
-		entry[ForecastIdxCloudCover] = cloudCoverToArray(f.CloudCover)
-	}
 	if f.Condition != nil {
 		entry[ForecastIdxCondition] = *f.Condition
 	}
@@ -333,40 +316,43 @@ func forecastToArray(f Forecast) []any {
 	if f.Precipitation12Hours != nil {
 		entry[ForecastIdxPrecipitation] = *f.Precipitation12Hours
 	}
+	if f.CloudCover != nil {
+		entry[ForecastIdxCloudCover] = cloudCoverToArray(f.CloudCover)
+	}
 
 	return entry
 }
 
 func forecastToCompactArray(f Forecast) []any {
-	entry := make([]any, CompactForecastEntrySize)
-	entry[CompactForecastIdxTime] = f.TimeUnix
+	entry := make([]any, ForecastEntrySize-1)
+	entry[ForecastIdxTime] = f.TimeUnix
 
 	if f.SeaTemperature != nil {
-		entry[CompactForecastIdxSeaTemperature] = *f.SeaTemperature
+		entry[ForecastIdxSeaTemperature] = *f.SeaTemperature
 	}
 	if f.WaveHeight != nil {
-		entry[CompactForecastIdxWaveHeight] = *f.WaveHeight
+		entry[ForecastIdxWaveHeight] = *f.WaveHeight
 	}
 	if f.WaveDirection != nil {
-		entry[CompactForecastIdxWaveDirection] = *f.WaveDirection
+		entry[ForecastIdxWaveDirection] = *f.WaveDirection
 	}
 	if f.Temperature != nil {
-		entry[CompactForecastIdxTemperature] = *f.Temperature
+		entry[ForecastIdxTemperature] = *f.Temperature
 	}
 	if f.WindSpeed != nil {
-		entry[CompactForecastIdxWindSpeed] = *f.WindSpeed
+		entry[ForecastIdxWindSpeed] = *f.WindSpeed
 	}
 	if f.WindDirection != nil {
-		entry[CompactForecastIdxWindDirection] = *f.WindDirection
+		entry[ForecastIdxWindDirection] = *f.WindDirection
 	}
 	if f.Condition != nil {
-		entry[CompactForecastIdxCondition] = *f.Condition
+		entry[ForecastIdxCondition] = *f.Condition
 	}
 	if f.UvIndex != nil {
-		entry[CompactForecastIdxUvIndex] = *f.UvIndex
+		entry[ForecastIdxUvIndex] = *f.UvIndex
 	}
 	if f.Precipitation12Hours != nil {
-		entry[CompactForecastIdxPrecipitation] = *f.Precipitation12Hours
+		entry[ForecastIdxPrecipitation] = *f.Precipitation12Hours
 	}
 
 	return entry
