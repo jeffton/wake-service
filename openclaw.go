@@ -16,15 +16,16 @@ func (s *Server) scheduleOpenClaw() error {
 
 	// Schedule via cron with delay (survives service restart)
 	args := []string{"cron", "add",
+		"--name", "Garmin workout ping",
 		"--delete-after-run",
 		"--system-event", text,
 	}
 
 	// Add delay if configured, otherwise immediate
 	if config.DelayMinutes > 0 {
-		args = append(args, "--at", fmt.Sprintf("+%dm", config.DelayMinutes))
+		args = append(args, "--at", fmt.Sprintf("%dm", config.DelayMinutes))
 	} else {
-		args = append(args, "--at", "+0m")
+		args = append(args, "--at", "0m")
 	}
 
 	cmd := exec.Command("openclaw", args...)
