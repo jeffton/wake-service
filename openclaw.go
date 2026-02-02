@@ -8,9 +8,6 @@ import (
 
 func (s *Server) scheduleOpenClaw() error {
 	config := s.options.OpenClaw
-	if config.Token == "" {
-		return fmt.Errorf("openclaw is not configured (missing token)")
-	}
 
 	text := strings.TrimSpace(config.Prompt)
 	if text == "" {
@@ -21,7 +18,6 @@ func (s *Server) scheduleOpenClaw() error {
 	args := []string{"cron", "add",
 		"--delete-after-run",
 		"--system-event", text,
-		"--token", config.Token,
 	}
 
 	// Add delay if configured, otherwise immediate
@@ -29,11 +25,6 @@ func (s *Server) scheduleOpenClaw() error {
 		args = append(args, "--at", fmt.Sprintf("+%dm", config.DelayMinutes))
 	} else {
 		args = append(args, "--at", "+0m")
-	}
-
-	// Only add --url if explicitly configured
-	if config.URL != "" {
-		args = append(args, "--url", config.URL)
 	}
 
 	cmd := exec.Command("openclaw", args...)

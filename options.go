@@ -31,8 +31,6 @@ type ApiKey struct {
 }
 
 type OpenClawOptions struct {
-	URL          string `json:"url"`
-	Token        string `json:"token"`
 	DelayMinutes int    `json:"delayMinutes"`
 	Prompt       string `json:"prompt"`
 }
