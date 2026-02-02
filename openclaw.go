@@ -17,10 +17,18 @@ func (s *Server) scheduleOpenClaw() error {
 		text = "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
 	}
 
-	args := []string{"system", "event",
-		"--text", text,
-		"--mode", "now",
+	// Schedule via cron with delay (survives service restart)
+	args := []string{"cron", "add",
+		"--delete-after-run",
+		"--system-event", text,
 		"--token", config.Token,
+	}
+
+	// Add delay if configured, otherwise immediate
+	if config.DelayMinutes > 0 {
+		args = append(args, "--at", fmt.Sprintf("+%dm", config.DelayMinutes))
+	} else {
+		args = append(args, "--at", "+0m")
 	}
 
 	// Only add --url if explicitly configured
