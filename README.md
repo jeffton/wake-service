@@ -1,8 +1,8 @@
 # Wake Service
 
-Wake is a small Go service that proxies the MET Norway (YR) ocean and location forecasts, adds caching, and exposes a compact or JSON-readable format for clients like Garmin watch faces and AI agents. It also supports logging watch locations and scheduling OpenClaw prompts after a workout.
+Wake is a small Go service that proxies the YR ocean and location forecasts, adds caching, and exposes a compact or JSON-readable format for clients like Garmin watch faces and AI agents. It also supports logging watch locations and scheduling OpenClaw prompts after a workout.
 
-Data is provided by the Norwegian Meteorological Institute (YR), https://api.met.no.
+Data is provided by the [Norwegian Meteorological Institute (YR)](https://api.met.no).
 
 ## Endpoints
 
@@ -92,3 +92,9 @@ Notes:
 go build ./...
 PORT=8080 ./wake-service
 ```
+
+## Deployment
+Deploy your own instance of this service to use it (I don't want your location data). Easily deployed to any server - your favourite AI agent can help you with this!
+
+## AI usage
+All code prompted with Codex & reviewed.
