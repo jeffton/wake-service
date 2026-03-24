@@ -16,11 +16,11 @@ const (
 )
 
 type Options struct {
-	UserAgent       string          `json:"userAgent"`
-	LocationLogPath string          `json:"locationLogPath"`
-	SyncStatePath   string          `json:"syncStatePath"`
-	ApiKeys         []ApiKey        `json:"apiKeys"`
-	OpenClaw        OpenClawOptions `json:"openClaw"`
+	UserAgent       string      `json:"userAgent"`
+	LocationLogPath string      `json:"locationLogPath"`
+	SyncStatePath   string      `json:"syncStatePath"`
+	ApiKeys         []ApiKey    `json:"apiKeys"`
+	Cron            CronOptions `json:"cron"`
 }
 
 type ApiKey struct {
@@ -30,9 +30,9 @@ type ApiKey struct {
 	AllowWorkout     bool   `json:"allowWorkout"`
 }
 
-type OpenClawOptions struct {
-	DelayMinutes int    `json:"delayMinutes"`
-	Prompt       string `json:"prompt"`
+type CronOptions struct {
+	Command string `json:"command"`
+	Prompt  string `json:"prompt"`
 }
 
 func loadOptions() (Options, error) {
@@ -53,6 +53,13 @@ func loadOptions() (Options, error) {
 
 	if len(options.ApiKeys) == 0 {
 		return Options{}, fmt.Errorf("apiKeys must be set in options file %s", path)
+	}
+
+	if options.Cron.Command == "" {
+		return Options{}, fmt.Errorf("cron.command must be set in options file %s", path)
+	}
+	if options.Cron.Prompt == "" {
+		return Options{}, fmt.Errorf("cron.prompt must be set in options file %s", path)
 	}
 
 	if options.SyncStatePath == "" {

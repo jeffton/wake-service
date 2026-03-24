@@ -37,7 +37,7 @@ func (s *Server) syncWorkouts(lastWorkout int64) error {
 	shouldTrigger, nextState, shouldUpdate := evaluateWorkoutSyncState(state, exists, lastWorkout)
 
 	if shouldTrigger {
-		if err := s.scheduleOpenClaw(); err != nil {
+		if err := s.scheduleCron(); err != nil {
 			return err
 		}
 	}

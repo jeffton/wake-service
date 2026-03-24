@@ -1,6 +1,6 @@
 # Wake Service
 
-Wake is a small Go service that proxies the YR ocean and location forecasts, adds caching, and exposes a compact or JSON-readable format for clients like Garmin watch faces and AI agents. It also supports logging watch locations and scheduling OpenClaw prompts after a workout.
+Wake is a small Go service that proxies the YR ocean and location forecasts, adds caching, and exposes a compact or JSON-readable format for clients like Garmin watch faces and AI agents. It also supports logging watch locations and scheduling a configurable cron command after a workout.
 
 Data is provided by the [Norwegian Meteorological Institute (YR)](https://api.met.no).
 
@@ -37,7 +37,7 @@ Weather conditions are interpreted server-side, including cloud overlays and hea
 
 ### `GET /sync`
 
-Returns the same weather response as `/weather` and optionally schedules OpenClaw when the workout marker changes.
+Returns the same weather response as `/weather` and optionally schedules the configured cron command when the workout marker changes.
 
 Query parameters:
 
@@ -47,7 +47,7 @@ Query parameters:
 - `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
 - `lastWorkout` (int, required): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value. `0` is treated as "no workout" and is ignored.
 
-When `lastWorkout` differs from the stored value (and is non-zero), the service schedules the OpenClaw prompt (requires an API key with workout permissions).
+When `lastWorkout` differs from the stored value (and is non-zero), the service runs the configured cron command (requires an API key with workout permissions).
 
 ## Options file
 
@@ -71,8 +71,8 @@ Example:
       "allowWorkout": true
     }
   ],
-  "openClaw": {
-    "delayMinutes": 3,
+  "cron": {
+    "command": "openclaw cron add --name \"Garmin workout ping\" --delete-after-run --system-event {prompt} --at \"3m\"",
     "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
   }
 }
@@ -83,8 +83,12 @@ Notes:
 - `userAgent` is required and must be a descriptive identifier for the MET API.
 - Location logging only happens for API keys with `allowLocationLog`.
 - Workout scheduling only works for API keys with `allowWorkout`.
-- If `delayMinutes` is omitted, it defaults to 3 minutes; `0` is allowed to run immediately.
-- The workout prompt is sent to OpenClaw as-is.
+- `cron.command` is required.
+- `cron.prompt` is required.
+- `cron.command` is executed through `/bin/sh -c`.
+- Wake replaces `{prompt}` in `cron.command` with the configured prompt, shell-escaped as a single argument.
+- Any scheduling delay should be encoded directly in `cron.command`.
+- To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace wake-service --prompt {prompt} --in "3m"`.
 
 ## Build & Run
 

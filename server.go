@@ -105,7 +105,7 @@ func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 
 	response := s.weatherResponse(r, key, pos)
 	if err := s.syncWorkouts(lastWorkout); err != nil {
-		appendResponseError(&response, fmt.Sprintf("openclaw error: %v", err))
+		appendResponseError(&response, fmt.Sprintf("cron error: %v", err))
 	}
 
 	s.writeWeatherResponse(w, format, response)
