@@ -88,7 +88,7 @@ Notes:
 - `cron.command` is executed through `/bin/sh -c`.
 - Wake replaces `{prompt}` in `cron.command` with the configured prompt, shell-escaped as a single argument.
 - Any scheduling delay should be encoded directly in `cron.command`.
-- To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace wake-service --prompt {prompt} --model openai-codex/gpt-5.4 --thinking medium --in "3m"`.
+- To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace workout-coach --prompt {prompt} --model openai-codex/gpt-5.4 --thinking medium --in "3m"`.
 
 ## Build & Run
 
