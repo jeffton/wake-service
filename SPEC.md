@@ -15,7 +15,7 @@ Add caching of forecasts. Forecasts should be cached for one hour with the GPS c
 
 The user agent should be read from the options file; fail if this is not set. Make sure not to check the current user agent into the repo.
 
-We will add a feature so that the watch can ping an OpenClaw instance when logging an activity. Schedule the OpenClaw cron with a configurable delay (default 3 minutes). This allows the workout to sync to Garmin Connect first. Have a configurable prompt for this, default "David har logget en ny Garmin-aktivitet i /root/github/pt. Følg instruktionerne i AGENTS.md." Example for pinging OpenClaw:
+We will add a feature so that the watch can ping an OpenClaw instance when logging an activity. Schedule the OpenClaw cron with a configurable delay (default 3 minutes). This allows the workout to sync to Garmin Connect first. Have a configurable prompt for this, default "The user has logged an activity with Garmin. Check Garmin stats and give feedback." Example for pinging OpenClaw:
 
 curl -X POST [http://localhost:18789/api/cron/add](http://localhost:18789/api/cron/add) \
 -H "Authorization: Bearer $TOKEN" \
@@ -26,7 +26,7 @@ curl -X POST [http://localhost:18789/api/cron/add](http://localhost:18789/api/cr
 "schedule": { "kind": "at", "at": "'$(date -d "+3 minutes" +%s)000'" },
 "sessionTarget": "main",
 "wakeMode": "now",
-"payload": { "kind": "systemEvent", "text": "David har logget en ny Garmin-aktivitet i /root/github/pt. Følg instruktionerne i AGENTS.md." },
+"payload": { "kind": "systemEvent", "text": "🏃 Ny aktivitet logget - tjek Garmin og giv feedback!" },
 "deleteAfterRun": true
 }
 }'

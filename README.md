@@ -73,7 +73,7 @@ Example:
   ],
   "cron": {
     "command": "openclaw cron add --name \"Garmin workout ping\" --delete-after-run --system-event {prompt} --at \"3m\"",
-    "prompt": "David har logget en ny Garmin-aktivitet i /root/github/pt. Følg instruktionerne i AGENTS.md."
+    "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
   }
 }
 ```
@@ -88,7 +88,7 @@ Notes:
 - `cron.command` is executed through `/bin/sh -c`.
 - Wake replaces `{prompt}` in `cron.command` with the configured prompt, shell-escaped as a single argument.
 - Any scheduling delay should be encoded directly in `cron.command`.
-- To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace pt --prompt {prompt} --in "3m"`.
+- To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace workout-coach --prompt {prompt} --model openai-codex/gpt-5.4 --thinking medium --in "3m"`.
 
 ## Build & Run
 
