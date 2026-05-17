@@ -71,7 +71,7 @@ Weather conditions are interpreted server-side, including cloud overlays and hea
 
 ### `POST /sync`
 
-Returns the same weather response as `/weather` for the stored location and optionally schedules the configured cron command when the workout marker changes. Requires a `full` API key.
+Returns the same weather response as `/weather` for the stored location and schedules configured cron commands for workout and wakeup events. Requires a `full` API key.
 
 JSON body:
 
@@ -86,7 +86,7 @@ JSON body:
 Fields:
 
 - `lastWorkout` (int, optional): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value. `0` or omitted is treated as "no workout" and is ignored.
-- `awake` (optional): `1` when the user is awake, `0` when the user is asleep. The value is accepted and ignored.
+- `awake` (optional): `1` when the user is awake, `0` when the user is asleep. The wakeup cron command runs the first time `awake=1` is received after the configured wakeup hour on a date.
 - `format` (optional): `json` (default) or `compact`.
 
 `/weather` and `/sync` return an error when they need the stored location and none has been saved.
@@ -125,8 +125,15 @@ Example:
     }
   ],
   "cron": {
-    "command": "openclaw cron add --name \"Garmin workout ping\" --delete-after-run --system-event {prompt} --at \"3m\"",
-    "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
+    "workout": {
+      "command": "openclaw cron add --name \"Garmin workout ping\" --delete-after-run --system-event {prompt} --at \"3m\"",
+      "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
+    },
+    "wakeup": {
+      "command": "openclaw cron add --name \"Wakeup ping\" --delete-after-run --system-event {prompt} --at \"now\"",
+      "prompt": "The user is awake. Check current context and help plan the day.",
+      "hour": 4
+    }
   }
 }
 ```
@@ -137,11 +144,12 @@ Notes:
 - `apiKeys` is required and every key must have type `weather` or `full`.
 - `locationPath` defaults to `location.json` next to the options file.
 - `syncStatePath` defaults to `sync-state.json` next to the options file.
-- `cron.command` is required.
-- `cron.prompt` is required.
-- `cron.command` is executed through `/bin/sh -c`.
-- Wake replaces `{prompt}` in `cron.command` with the configured prompt, shell-escaped as a single argument.
-- Any scheduling delay should be encoded directly in `cron.command`.
+- `cron.workout.command` and `cron.workout.prompt` are required.
+- `cron.wakeup.command` and `cron.wakeup.prompt` are required.
+- `cron.wakeup.hour` controls the earliest hour of the day that `awake=1` can trigger the wakeup cron command. It defaults to `4`.
+- Cron commands are executed through `/bin/sh -c`.
+- Wake replaces `{prompt}` in cron commands with the configured prompt, shell-escaped as a single argument.
+- Any scheduling delay should be encoded directly in the cron command.
 - To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace workout-coach --prompt {prompt} --model openai-codex/gpt-5.4 --thinking medium --in "3m"`.
 
 ## Build & Run

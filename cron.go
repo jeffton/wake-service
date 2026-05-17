@@ -6,11 +6,9 @@ import (
 	"strings"
 )
 
-func (s *Server) scheduleCron() error {
-	config := s.options.Cron
-
-	commandText := strings.TrimSpace(config.Command)
-	commandText = strings.ReplaceAll(commandText, "{prompt}", shellQuote(strings.TrimSpace(config.Prompt)))
+func (s *Server) scheduleCron(command, prompt string) error {
+	commandText := strings.TrimSpace(command)
+	commandText = strings.ReplaceAll(commandText, "{prompt}", shellQuote(strings.TrimSpace(prompt)))
 
 	cmd := exec.Command("/bin/sh", "-c", commandText)
 	output, err := cmd.CombinedOutput()

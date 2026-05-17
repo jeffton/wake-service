@@ -30,8 +30,26 @@ type ApiKey struct {
 }
 
 type CronOptions struct {
+	Workout CronJobOptions    `json:"workout"`
+	Wakeup  WakeupCronOptions `json:"wakeup"`
+}
+
+type CronJobOptions struct {
 	Command string `json:"command"`
 	Prompt  string `json:"prompt"`
+}
+
+type WakeupCronOptions struct {
+	Command string `json:"command"`
+	Prompt  string `json:"prompt"`
+	Hour    *int   `json:"hour"`
+}
+
+func (options WakeupCronOptions) TriggerHour() int {
+	if options.Hour == nil {
+		return 4
+	}
+	return *options.Hour
 }
 
 func loadOptions() (Options, error) {
@@ -54,11 +72,20 @@ func loadOptions() (Options, error) {
 		return Options{}, fmt.Errorf("apiKeys must be set in options file %s", path)
 	}
 
-	if options.Cron.Command == "" {
-		return Options{}, fmt.Errorf("cron.command must be set in options file %s", path)
+	if options.Cron.Workout.Command == "" {
+		return Options{}, fmt.Errorf("cron.workout.command must be set in options file %s", path)
 	}
-	if options.Cron.Prompt == "" {
-		return Options{}, fmt.Errorf("cron.prompt must be set in options file %s", path)
+	if options.Cron.Workout.Prompt == "" {
+		return Options{}, fmt.Errorf("cron.workout.prompt must be set in options file %s", path)
+	}
+	if options.Cron.Wakeup.Command == "" {
+		return Options{}, fmt.Errorf("cron.wakeup.command must be set in options file %s", path)
+	}
+	if options.Cron.Wakeup.Prompt == "" {
+		return Options{}, fmt.Errorf("cron.wakeup.prompt must be set in options file %s", path)
+	}
+	if options.Cron.Wakeup.TriggerHour() < 0 || options.Cron.Wakeup.TriggerHour() > 23 {
+		return Options{}, fmt.Errorf("cron.wakeup.hour must be between 0 and 23 in options file %s", path)
 	}
 
 	for _, key := range options.ApiKeys {
