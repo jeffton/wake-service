@@ -13,7 +13,7 @@ type WorkoutSyncState struct {
 	LastWorkout int64 `json:"lastWorkout"`
 }
 
-func (s *Server) syncWorkouts(lastWorkout int64, awake *bool) error {
+func (s *Server) syncWorkouts(lastWorkout int64) error {
 	state, exists, err := loadWorkoutSyncState(s.options.SyncStatePath)
 	if err != nil {
 		return err
@@ -22,7 +22,7 @@ func (s *Server) syncWorkouts(lastWorkout int64, awake *bool) error {
 	shouldTrigger, nextState, shouldUpdate := evaluateWorkoutSyncState(state, exists, lastWorkout)
 
 	if shouldTrigger {
-		if err := s.scheduleCron(awake); err != nil {
+		if err := s.scheduleCron(); err != nil {
 			return err
 		}
 	}

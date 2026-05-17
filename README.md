@@ -86,7 +86,7 @@ JSON body:
 Fields:
 
 - `lastWorkout` (int, optional): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value. `0` or omitted is treated as "no workout" and is ignored.
-- `awake` (optional): `1` when the user is awake, `0` when the user is asleep. When a cron command is scheduled, `{awake}` expands to `awake`, `asleep`, or `unknown`, and the prompt includes the awake state when supplied.
+- `awake` (optional): `1` when the user is awake, `0` when the user is asleep. The value is accepted and ignored.
 - `format` (optional): `json` (default) or `compact`.
 
 `/weather` and `/sync` return an error when they need the stored location and none has been saved.
@@ -141,7 +141,6 @@ Notes:
 - `cron.prompt` is required.
 - `cron.command` is executed through `/bin/sh -c`.
 - Wake replaces `{prompt}` in `cron.command` with the configured prompt, shell-escaped as a single argument.
-- Wake replaces `{awake}` in `cron.command` with `awake`, `asleep`, or `unknown`, shell-escaped as a single argument.
 - Any scheduling delay should be encoded directly in `cron.command`.
 - To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace workout-coach --prompt {prompt} --model openai-codex/gpt-5.4 --thinking medium --in "3m"`.
 

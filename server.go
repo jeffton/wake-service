@@ -141,7 +141,7 @@ func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := s.weatherResponse(pos)
-	if err := s.syncWorkouts(request.LastWorkout, request.Awake); err != nil {
+	if err := s.syncWorkouts(request.LastWorkout); err != nil {
 		appendResponseError(&response, fmt.Sprintf("cron error: %v", err))
 	}
 
@@ -292,7 +292,6 @@ func readLocationPost(r *http.Request) (Position, string, error) {
 
 type SyncPostRequest struct {
 	LastWorkout int64
-	Awake       *bool
 	Format      string
 }
 
@@ -311,21 +310,11 @@ func readSyncPost(r *http.Request) (SyncPostRequest, error) {
 		return SyncPostRequest{}, errors.New("invalid format (use json or compact)")
 	}
 
-	var awake *bool
-	if payload.Awake != nil {
-		switch *payload.Awake {
-		case 1:
-			parsed := true
-			awake = &parsed
-		case 0:
-			parsed := false
-			awake = &parsed
-		default:
-			return SyncPostRequest{}, errors.New("invalid awake value (use 1 or 0)")
-		}
+	if payload.Awake != nil && *payload.Awake != 0 && *payload.Awake != 1 {
+		return SyncPostRequest{}, errors.New("invalid awake value (use 1 or 0)")
 	}
 
-	return SyncPostRequest{LastWorkout: payload.LastWorkout, Awake: awake, Format: format}, nil
+	return SyncPostRequest{LastWorkout: payload.LastWorkout, Format: format}, nil
 }
 
 func parsePosition(latStr, lonStr string) (Position, error) {
