@@ -4,11 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -16,19 +13,7 @@ type WorkoutSyncState struct {
 	LastWorkout int64 `json:"lastWorkout"`
 }
 
-func parseSyncWorkoutParam(r *http.Request) (int64, error) {
-	lastWorkoutStr := strings.TrimSpace(r.URL.Query().Get("lastWorkout"))
-	if lastWorkoutStr == "" {
-		return 0, errors.New("lastWorkout is required")
-	}
-	lastWorkout, err := strconv.ParseInt(lastWorkoutStr, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid lastWorkout value: %w", err)
-	}
-	return lastWorkout, nil
-}
-
-func (s *Server) syncWorkouts(lastWorkout int64) error {
+func (s *Server) syncWorkouts(lastWorkout int64, awake *bool) error {
 	state, exists, err := loadWorkoutSyncState(s.options.SyncStatePath)
 	if err != nil {
 		return err
@@ -37,7 +22,7 @@ func (s *Server) syncWorkouts(lastWorkout int64) error {
 	shouldTrigger, nextState, shouldUpdate := evaluateWorkoutSyncState(state, exists, lastWorkout)
 
 	if shouldTrigger {
-		if err := s.scheduleCron(); err != nil {
+		if err := s.scheduleCron(awake); err != nil {
 			return err
 		}
 	}

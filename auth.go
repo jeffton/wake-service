@@ -7,8 +7,17 @@ import (
 
 const apiKeyHeader = "X-Api-Key"
 
+const (
+	apiKeyTypeWeather = "weather"
+	apiKeyTypeFull    = "full"
+)
+
 type AuthenticatedKey struct {
 	ApiKey ApiKey
+}
+
+func (key *AuthenticatedKey) IsFull() bool {
+	return key.ApiKey.Type == apiKeyTypeFull
 }
 
 func authenticate(options Options, r *http.Request) (*AuthenticatedKey, bool) {

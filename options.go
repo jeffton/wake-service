@@ -16,18 +16,17 @@ const (
 )
 
 type Options struct {
-	UserAgent       string      `json:"userAgent"`
-	LocationLogPath string      `json:"locationLogPath"`
-	SyncStatePath   string      `json:"syncStatePath"`
-	ApiKeys         []ApiKey    `json:"apiKeys"`
-	Cron            CronOptions `json:"cron"`
+	UserAgent     string      `json:"userAgent"`
+	LocationPath  string      `json:"locationPath"`
+	SyncStatePath string      `json:"syncStatePath"`
+	ApiKeys       []ApiKey    `json:"apiKeys"`
+	Cron          CronOptions `json:"cron"`
 }
 
 type ApiKey struct {
-	Name             string `json:"name"`
-	Key              string `json:"key"`
-	AllowLocationLog bool   `json:"allowLocationLog"`
-	AllowWorkout     bool   `json:"allowWorkout"`
+	Name string `json:"name"`
+	Key  string `json:"key"`
+	Type string `json:"type"`
 }
 
 type CronOptions struct {
@@ -62,6 +61,15 @@ func loadOptions() (Options, error) {
 		return Options{}, fmt.Errorf("cron.prompt must be set in options file %s", path)
 	}
 
+	for _, key := range options.ApiKeys {
+		if key.Type != apiKeyTypeWeather && key.Type != apiKeyTypeFull {
+			return Options{}, fmt.Errorf("api key %s has invalid type %q (use weather or full)", key.Name, key.Type)
+		}
+	}
+
+	if options.LocationPath == "" {
+		options.LocationPath = filepath.Join(filepath.Dir(path), "location.json")
+	}
 	if options.SyncStatePath == "" {
 		options.SyncStatePath = filepath.Join(filepath.Dir(path), "sync-state.json")
 	}

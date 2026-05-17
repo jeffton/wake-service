@@ -1,19 +1,53 @@
 # Wake Service
 
-Wake is a small Go service that proxies the YR ocean and location forecasts, adds caching, and exposes a compact or JSON-readable format for clients like Garmin watch faces and AI agents. It also supports logging watch locations and scheduling a configurable cron command after a workout.
+Wake is a small Go service that proxies the YR ocean and location forecasts, adds caching, stores a trusted location, and exposes compact or JSON-readable weather responses for clients like Garmin watch faces and AI agents. It can also schedule a configurable cron command after a workout.
 
 Data is provided by the [Norwegian Meteorological Institute (YR)](https://api.met.no).
 
 ## Endpoints
 
+All endpoints require an `X-Api-Key` header.
+
+### `GET /location`
+
+Returns the stored location. Requires a `full` API key.
+
+Response:
+
+```json
+{
+  "lat": 59.1234,
+  "lon": 10.1234,
+  "precision": "reduced",
+  "ts": 1779020000
+}
+```
+
+### `POST /location`
+
+Stores the location. Requires a `full` API key. All parameters are supplied in the JSON body.
+
+JSON body:
+
+```json
+{
+  "lat": 59.1234,
+  "lon": 10.1234,
+  "precision": "reduced"
+}
+
+`precision` is optional and stored as supplied by the client.
+```
+
 ### `GET /weather`
+
+Fetches weather for supplied coordinates, or for the stored location when coordinates are omitted. Using the stored location requires a `full` API key. A `weather` API key may fetch weather only for supplied coordinates.
 
 Query parameters:
 
-- `lat` (float, required).
-- `lon` (float, required).
+- `lat` (float, optional).
+- `lon` (float, optional).
 - `format` (optional): `json` (default) or `compact`.
-- `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
 
 The response includes merged ocean + weather forecast data. Times without location forecast data (ocean-only samples) are omitted. The `compact` format uses arrays for each forecast entry (limited to 12 entries and omits cloud cover). The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available; it returns all available forecast times. JSON timestamps are formatted in local time, precipitation is reported as `precipitation12hours`, and `meta.units` describes the units.
 
@@ -35,19 +69,34 @@ Weather conditions are interpreted server-side, including cloud overlays and hea
 - `hail`
 - `fog`
 
-### `GET /sync`
+### `POST /sync`
 
-Returns the same weather response as `/weather` and optionally schedules the configured cron command when the workout marker changes.
+Returns the same weather response as `/weather` for the stored location and optionally schedules the configured cron command when the workout marker changes. Requires a `full` API key.
 
-Query parameters:
+JSON body:
 
-- `lat` (float, required).
-- `lon` (float, required).
+```json
+{
+  "lastWorkout": 1779020000,
+  "awake": 1,
+  "format": "json"
+}
+```
+
+Fields:
+
+- `lastWorkout` (int, optional): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value. `0` or omitted is treated as "no workout" and is ignored.
+- `awake` (optional): `1` when the user is awake, `0` when the user is asleep. When a cron command is scheduled, `{awake}` expands to `awake`, `asleep`, or `unknown`, and the prompt includes the awake state when supplied.
 - `format` (optional): `json` (default) or `compact`.
-- `logLocation` (optional): `true`/`1` to log the request position (requires an API key with location logging enabled).
-- `lastWorkout` (int, required): timestamp-like marker for the most recent workout. The value is treated as an opaque number and only compared to the last stored value. `0` is treated as "no workout" and is ignored.
 
-When `lastWorkout` differs from the stored value (and is non-zero), the service runs the configured cron command (requires an API key with workout permissions).
+`/weather` and `/sync` return an error when they need the stored location and none has been saved.
+
+## API keys
+
+There are two API key types:
+
+- `weather`: can call `/weather` with supplied `lat` and `lon` coordinates.
+- `full`: can call all endpoints, use the stored location, update the stored location, and run sync.
 
 ## Options file
 
@@ -61,14 +110,18 @@ Example:
 ```json
 {
   "userAgent": "Wake/1.0 (you@example.com)",
-  "locationLogPath": "/var/wake-service/location.json",
+  "locationPath": "/var/wake-service/location.json",
   "syncStatePath": "/var/wake-service/sync-state.json",
   "apiKeys": [
     {
+      "name": "public-weather",
+      "key": "weather-key",
+      "type": "weather"
+    },
+    {
       "name": "watch",
-      "key": "change-me",
-      "allowLocationLog": true,
-      "allowWorkout": true
+      "key": "full-key",
+      "type": "full"
     }
   ],
   "cron": {
@@ -81,12 +134,14 @@ Example:
 Notes:
 
 - `userAgent` is required and must be a descriptive identifier for the MET API.
-- Location logging only happens for API keys with `allowLocationLog`.
-- Workout scheduling only works for API keys with `allowWorkout`.
+- `apiKeys` is required and every key must have type `weather` or `full`.
+- `locationPath` defaults to `location.json` next to the options file.
+- `syncStatePath` defaults to `sync-state.json` next to the options file.
 - `cron.command` is required.
 - `cron.prompt` is required.
 - `cron.command` is executed through `/bin/sh -c`.
 - Wake replaces `{prompt}` in `cron.command` with the configured prompt, shell-escaped as a single argument.
+- Wake replaces `{awake}` in `cron.command` with `awake`, `asleep`, or `unknown`, shell-escaped as a single argument.
 - Any scheduling delay should be encoded directly in `cron.command`.
 - To target Batty instead of OpenClaw, use a Batty CLI command such as `batty --root /root/github cron add --workspace workout-coach --prompt {prompt} --model openai-codex/gpt-5.4 --thinking medium --in "3m"`.
 
@@ -98,7 +153,9 @@ PORT=8080 ./wake-service
 ```
 
 ## Deployment
+
 Deploy your own instance of this service to use it (I don't want your location data). Easily deployed to any server - your favourite AI agent can help you with this!
 
 ## AI usage
+
 All code prompted with Codex & reviewed.
