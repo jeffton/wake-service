@@ -4,87 +4,102 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 )
 
-type WorkoutSyncState struct {
-	LastWorkout int64 `json:"lastWorkout"`
+type SyncState struct {
+	LastWorkout    int64  `json:"lastWorkout"`
+	LastWakeupDate string `json:"lastWakeupDate"`
 }
 
-func parseSyncWorkoutParam(r *http.Request) (int64, error) {
-	lastWorkoutStr := strings.TrimSpace(r.URL.Query().Get("lastWorkout"))
-	if lastWorkoutStr == "" {
-		return 0, errors.New("lastWorkout is required")
-	}
-	lastWorkout, err := strconv.ParseInt(lastWorkoutStr, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid lastWorkout value: %w", err)
-	}
-	return lastWorkout, nil
-}
-
-func (s *Server) syncWorkouts(lastWorkout int64) error {
-	state, exists, err := loadWorkoutSyncState(s.options.SyncStatePath)
+func (s *Server) syncEvents(lastWorkout int64, awake *bool) error {
+	state, exists, err := loadSyncState(s.options.SyncStatePath)
 	if err != nil {
 		return err
 	}
 
-	shouldTrigger, nextState, shouldUpdate := evaluateWorkoutSyncState(state, exists, lastWorkout)
+	workoutTrigger, workoutState := evaluateWorkoutSyncState(state, exists, lastWorkout)
+	wakeupTrigger, wakeupState := evaluateWakeupSyncState(state, awake, time.Now(), s.options.Cron.Wakeup.TriggerHour())
 
-	if shouldTrigger {
-		if err := s.scheduleCron(); err != nil {
-			return err
+	nextState := state
+	shouldUpdate := false
+	var syncErrors []error
+
+	if workoutTrigger {
+		config := s.options.Cron.Workout
+		if err := s.scheduleCron(config.Command, config.Prompt); err != nil {
+			syncErrors = append(syncErrors, fmt.Errorf("workout cron error: %w", err))
+		} else {
+			nextState.LastWorkout = workoutState.LastWorkout
+			shouldUpdate = true
+		}
+	}
+	if wakeupTrigger {
+		config := s.options.Cron.Wakeup
+		if err := s.scheduleCron(config.Command, config.Prompt); err != nil {
+			syncErrors = append(syncErrors, fmt.Errorf("wakeup cron error: %w", err))
+		} else {
+			nextState.LastWakeupDate = wakeupState.LastWakeupDate
+			shouldUpdate = true
 		}
 	}
 
 	if shouldUpdate {
-		if err := writeWorkoutSyncState(s.options.SyncStatePath, nextState); err != nil {
-			return err
+		if err := writeSyncState(s.options.SyncStatePath, nextState); err != nil {
+			syncErrors = append(syncErrors, err)
 		}
 	}
 
-	return nil
+	return errors.Join(syncErrors...)
 }
 
-func evaluateWorkoutSyncState(state WorkoutSyncState, exists bool, lastWorkout int64) (bool, WorkoutSyncState, bool) {
+func evaluateWorkoutSyncState(state SyncState, exists bool, lastWorkout int64) (bool, SyncState) {
 	if lastWorkout == 0 {
-		return false, state, false
+		return false, state
 	}
 
-	if !exists {
-		return true, WorkoutSyncState{LastWorkout: lastWorkout}, true
+	if exists && lastWorkout == state.LastWorkout {
+		return false, state
 	}
 
-	if lastWorkout == state.LastWorkout {
-		return false, state, false
-	}
-
-	return true, WorkoutSyncState{LastWorkout: lastWorkout}, true
+	state.LastWorkout = lastWorkout
+	return true, state
 }
 
-func loadWorkoutSyncState(path string) (WorkoutSyncState, bool, error) {
+func evaluateWakeupSyncState(state SyncState, awake *bool, now time.Time, triggerHour int) (bool, SyncState) {
+	if awake == nil || !*awake || now.Hour() < triggerHour {
+		return false, state
+	}
+
+	wakeupDate := now.Format("2006-01-02")
+	if state.LastWakeupDate == wakeupDate {
+		return false, state
+	}
+
+	state.LastWakeupDate = wakeupDate
+	return true, state
+}
+
+func loadSyncState(path string) (SyncState, bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return WorkoutSyncState{}, false, nil
+			return SyncState{}, false, nil
 		}
-		return WorkoutSyncState{}, false, fmt.Errorf("read sync state file: %w", err)
+		return SyncState{}, false, fmt.Errorf("read sync state file: %w", err)
 	}
 
-	var state WorkoutSyncState
+	var state SyncState
 	if err := json.Unmarshal(data, &state); err != nil {
-		return WorkoutSyncState{}, false, fmt.Errorf("decode sync state file: %w", err)
+		return SyncState{}, false, fmt.Errorf("decode sync state file: %w", err)
 	}
 
 	return state, true, nil
 }
 
-func writeWorkoutSyncState(path string, state WorkoutSyncState) error {
+func writeSyncState(path string, state SyncState) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("mkdir sync state dir: %w", err)
 	}
