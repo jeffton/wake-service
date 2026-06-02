@@ -18,6 +18,7 @@ const (
 type Options struct {
 	UserAgent     string      `json:"userAgent"`
 	LocationPath  string      `json:"locationPath"`
+	CalendarPath  string      `json:"calendarPath"`
 	SyncStatePath string      `json:"syncStatePath"`
 	ApiKeys       []ApiKey    `json:"apiKeys"`
 	Cron          CronOptions `json:"cron"`
@@ -96,6 +97,9 @@ func loadOptions() (Options, error) {
 
 	if options.LocationPath == "" {
 		options.LocationPath = filepath.Join(filepath.Dir(path), "location.json")
+	}
+	if options.CalendarPath == "" {
+		options.CalendarPath = filepath.Join(filepath.Dir(path), "calendar.json")
 	}
 	if options.SyncStatePath == "" {
 		options.SyncStatePath = filepath.Join(filepath.Dir(path), "sync-state.json")
