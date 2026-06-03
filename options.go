@@ -16,12 +16,10 @@ const (
 )
 
 type Options struct {
-	UserAgent     string      `json:"userAgent"`
-	LocationPath  string      `json:"locationPath"`
-	CalendarPath  string      `json:"calendarPath"`
-	SyncStatePath string      `json:"syncStatePath"`
-	ApiKeys       []ApiKey    `json:"apiKeys"`
-	Cron          CronOptions `json:"cron"`
+	UserAgent string      `json:"userAgent"`
+	DataDir   string      `json:"dataDir"`
+	ApiKeys   []ApiKey    `json:"apiKeys"`
+	Cron      CronOptions `json:"cron"`
 }
 
 type ApiKey struct {
@@ -95,17 +93,23 @@ func loadOptions() (Options, error) {
 		}
 	}
 
-	if options.LocationPath == "" {
-		options.LocationPath = filepath.Join(filepath.Dir(path), "location.json")
-	}
-	if options.CalendarPath == "" {
-		options.CalendarPath = filepath.Join(filepath.Dir(path), "calendar.json")
-	}
-	if options.SyncStatePath == "" {
-		options.SyncStatePath = filepath.Join(filepath.Dir(path), "sync-state.json")
+	if options.DataDir == "" {
+		options.DataDir = filepath.Dir(path)
 	}
 
 	return options, nil
+}
+
+func (options Options) LocationPath() string {
+	return filepath.Join(options.DataDir, "location.json")
+}
+
+func (options Options) CalendarPath() string {
+	return filepath.Join(options.DataDir, "calendar.json")
+}
+
+func (options Options) SyncStatePath() string {
+	return filepath.Join(options.DataDir, "sync-state.json")
 }
 
 func optionsPath() string {

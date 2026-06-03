@@ -119,7 +119,7 @@ JSON body:
 }
 ```
 
-The service writes the posted snapshot to `calendarPath` atomically. It replaces the previous snapshot instead of merging. Event identifiers, calendar identifiers, and external calendar item identifiers are included so an AI assistant can relate events to entries editable through tools such as `gog`.
+The service writes the posted snapshot to `calendar.json` in `dataDir` atomically. It replaces the previous snapshot instead of merging. Event identifiers, calendar identifiers, and external calendar item identifiers are included so an AI assistant can relate events to entries editable through tools such as `gog`.
 
 ### `POST /sync`
 
@@ -162,9 +162,7 @@ Example:
 ```json
 {
   "userAgent": "Wake/1.0 (you@example.com)",
-  "locationPath": "/var/wake-service/location.json",
-  "calendarPath": "/var/wake-service/calendar.json",
-  "syncStatePath": "/var/wake-service/sync-state.json",
+  "dataDir": "/var/wake-service",
   "apiKeys": [
     {
       "name": "public-weather",
@@ -195,9 +193,7 @@ Notes:
 
 - `userAgent` is required and must be a descriptive identifier for the MET API.
 - `apiKeys` is required and every key must have type `weather` or `full`.
-- `locationPath` defaults to `location.json` next to the options file.
-- `calendarPath` defaults to `calendar.json` next to the options file.
-- `syncStatePath` defaults to `sync-state.json` next to the options file.
+- `dataDir` stores Wake's mutable data files: `location.json`, `calendar.json`, and `sync-state.json`. It defaults to the directory containing the options file.
 - `cron.workout.command` and `cron.workout.prompt` are required.
 - `cron.wakeup.command` and `cron.wakeup.prompt` are required.
 - `cron.wakeup.hour` controls the earliest hour of the day that `awake=1` can trigger the wakeup cron command. It defaults to `4`.

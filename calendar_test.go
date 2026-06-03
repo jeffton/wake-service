@@ -10,7 +10,7 @@ import (
 
 func TestCalendarPostRequiresFullAPIKey(t *testing.T) {
 	server := NewServer(Options{
-		CalendarPath: filepath.Join(t.TempDir(), "calendar.json"),
+		DataDir: t.TempDir(),
 		ApiKeys: []ApiKey{
 			{Name: "weather", Key: "weather-key", Type: apiKeyTypeWeather},
 			{Name: "full", Key: "full-key", Type: apiKeyTypeFull},
@@ -29,10 +29,11 @@ func TestCalendarPostRequiresFullAPIKey(t *testing.T) {
 }
 
 func TestCalendarPostReplacesStoredSnapshot(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "calendar.json")
+	dir := t.TempDir()
+	path := filepath.Join(dir, "calendar.json")
 	server := NewServer(Options{
-		CalendarPath: path,
-		ApiKeys:      []ApiKey{{Name: "full", Key: "full-key", Type: apiKeyTypeFull}},
+		DataDir: dir,
+		ApiKeys: []ApiKey{{Name: "full", Key: "full-key", Type: apiKeyTypeFull}},
 	})
 
 	first := httptest.NewRequest(http.MethodPost, "/calendar", strings.NewReader(calendarPayloadJSON()))

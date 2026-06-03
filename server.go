@@ -56,7 +56,7 @@ func (s *Server) handleLocation(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		_, location, exists, err := loadLocation(s.options.LocationPath)
+		_, location, exists, err := loadLocation(s.options.LocationPath())
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -72,7 +72,7 @@ func (s *Server) handleLocation(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		location, err := writeLocation(s.options.LocationPath, pos, precision)
+		location, err := writeLocation(s.options.LocationPath(), pos, precision)
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -110,7 +110,7 @@ func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	response, err := writeCalendar(s.options.CalendarPath, payload)
+	response, err := writeCalendar(s.options.CalendarPath(), payload)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -282,7 +282,7 @@ func (s *Server) weatherPosition(r *http.Request, key *AuthenticatedKey) (Positi
 }
 
 func (s *Server) storedPosition() (Position, error) {
-	pos, _, exists, err := loadLocation(s.options.LocationPath)
+	pos, _, exists, err := loadLocation(s.options.LocationPath())
 	if err != nil {
 		return Position{}, err
 	}
