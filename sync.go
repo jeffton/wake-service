@@ -15,7 +15,7 @@ type SyncState struct {
 }
 
 func (s *Server) syncEvents(lastWorkout int64, awake *bool) error {
-	state, exists, err := loadSyncState(s.options.SyncStatePath)
+	state, exists, err := loadSyncState(s.options.SyncStatePath())
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (s *Server) syncEvents(lastWorkout int64, awake *bool) error {
 	}
 
 	if shouldUpdate {
-		if err := writeSyncState(s.options.SyncStatePath, nextState); err != nil {
+		if err := writeSyncState(s.options.SyncStatePath(), nextState); err != nil {
 			syncErrors = append(syncErrors, err)
 		}
 	}

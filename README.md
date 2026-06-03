@@ -69,6 +69,58 @@ Weather conditions are interpreted server-side, including cloud overlays and hea
 - `hail`
 - `fog`
 
+### `POST /calendar`
+
+Replaces the stored calendar snapshot. Requires a `full` API key. Batty Companion sends selected calendars and upcoming events for the next 7 days.
+
+JSON body:
+
+```json
+{
+  "syncedAt": "2026-06-02T20:00:00Z",
+  "windowStart": "2026-06-02T20:00:00Z",
+  "windowEnd": "2026-06-09T20:00:00Z",
+  "calendars": [
+    {
+      "id": "device-calendar-id",
+      "title": "Personal",
+      "sourceTitle": "Google",
+      "sourceType": "calDAV",
+      "colorHex": "#34A853"
+    }
+  ],
+  "events": [
+    {
+      "id": "event-id",
+      "eventIdentifier": "event-id",
+      "calendarItemIdentifier": "calendar-item-id",
+      "calendarItemExternalIdentifier": "google-event-id",
+      "calendarIdentifier": "device-calendar-id",
+      "calendarTitle": "Personal",
+      "sourceTitle": "Google",
+      "title": "Dentist",
+      "location": "Clinic",
+      "notes": "Bring card",
+      "url": "https://example.com/event",
+      "startDate": "2026-06-03T09:00:00Z",
+      "endDate": "2026-06-03T10:00:00Z",
+      "timeZone": "Europe/Oslo",
+      "isAllDay": false,
+      "availability": "busy",
+      "status": "confirmed",
+      "organizer": null,
+      "attendees": [],
+      "alarms": [],
+      "recurrenceRules": [],
+      "lastModifiedDate": "2026-06-01T12:00:00Z",
+      "creationDate": "2026-05-20T12:00:00Z"
+    }
+  ]
+}
+```
+
+The service writes the posted snapshot to `calendar.json` in `dataDir` atomically. It replaces the previous snapshot instead of merging. Event identifiers, calendar identifiers, and external calendar item identifiers are included so an AI assistant can relate events to entries editable through tools such as `gog`.
+
 ### `POST /sync`
 
 Returns the same weather response as `/weather` for the stored location and schedules configured cron commands for workout and wakeup events. Requires a `full` API key.
@@ -110,8 +162,7 @@ Example:
 ```json
 {
   "userAgent": "Wake/1.0 (you@example.com)",
-  "locationPath": "/var/wake-service/location.json",
-  "syncStatePath": "/var/wake-service/sync-state.json",
+  "dataDir": "/var/wake-service",
   "apiKeys": [
     {
       "name": "public-weather",
@@ -142,8 +193,7 @@ Notes:
 
 - `userAgent` is required and must be a descriptive identifier for the MET API.
 - `apiKeys` is required and every key must have type `weather` or `full`.
-- `locationPath` defaults to `location.json` next to the options file.
-- `syncStatePath` defaults to `sync-state.json` next to the options file.
+- `dataDir` stores Wake's mutable data files: `location.json`, `calendar.json`, and `sync-state.json`. It defaults to the directory containing the options file.
 - `cron.workout.command` and `cron.workout.prompt` are required.
 - `cron.wakeup.command` and `cron.wakeup.prompt` are required.
 - `cron.wakeup.hour` controls the earliest hour of the day that `awake=1` can trigger the wakeup cron command. It defaults to `4`.

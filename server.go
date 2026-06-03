@@ -38,6 +38,7 @@ func (s *Server) routes() {
 	http.HandleFunc("/location", s.handleLocation)
 	http.HandleFunc("/weather", s.handleWeather)
 	http.HandleFunc("/sync", s.handleSync)
+	http.HandleFunc("/calendar", s.handleCalendar)
 }
 
 func (s *Server) handleLocation(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +56,7 @@ func (s *Server) handleLocation(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		_, location, exists, err := loadLocation(s.options.LocationPath)
+		_, location, exists, err := loadLocation(s.options.LocationPath())
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -71,7 +72,7 @@ func (s *Server) handleLocation(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		location, err := writeLocation(s.options.LocationPath, pos, precision)
+		location, err := writeLocation(s.options.LocationPath(), pos, precision)
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -80,6 +81,41 @@ func (s *Server) handleLocation(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (s *Server) handleCalendar(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	key, ok := authenticate(s.options, r)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if !key.IsFull() {
+		writeJSONError(w, http.StatusForbidden, "calendar access not allowed for this api key")
+		return
+	}
+
+	var raw json.RawMessage
+	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
+		writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("invalid calendar json: %v", err))
+		return
+	}
+	payload, err := readCalendarPost(raw)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	response, err := writeCalendar(s.options.CalendarPath(), payload)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (s *Server) handleWeather(w http.ResponseWriter, r *http.Request) {
@@ -246,7 +282,7 @@ func (s *Server) weatherPosition(r *http.Request, key *AuthenticatedKey) (Positi
 }
 
 func (s *Server) storedPosition() (Position, error) {
-	pos, _, exists, err := loadLocation(s.options.LocationPath)
+	pos, _, exists, err := loadLocation(s.options.LocationPath())
 	if err != nil {
 		return Position{}, err
 	}
