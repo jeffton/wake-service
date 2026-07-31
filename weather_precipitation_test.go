@@ -31,11 +31,11 @@ func TestHourlyPrecipitationInJSONForecast(t *testing.T) {
 	}
 
 	forecast := response.Forecast[0]
-	if forecast.Precipitation1Hours == nil || *forecast.Precipitation1Hours != 37 {
-		t.Fatalf("precipitation1hours = %v, want 37", forecast.Precipitation1Hours)
+	if forecast.Precipitation1Hour == nil || *forecast.Precipitation1Hour != 37 {
+		t.Fatalf("precipitation1hour = %v, want 37", forecast.Precipitation1Hour)
 	}
-	if forecast.PrecipitationAmount1Hours == nil || *forecast.PrecipitationAmount1Hours != 0.4 {
-		t.Fatalf("precipitationAmount1hours = %v, want 0.4", forecast.PrecipitationAmount1Hours)
+	if forecast.PrecipitationAmount1Hour == nil || *forecast.PrecipitationAmount1Hour != 0.4 {
+		t.Fatalf("precipitationAmount1hour = %v, want 0.4", forecast.PrecipitationAmount1Hour)
 	}
 
 	encoded, err := json.Marshal(response)
@@ -47,19 +47,19 @@ func TestHourlyPrecipitationInJSONForecast(t *testing.T) {
 		t.Fatalf("unmarshal response JSON: %v", err)
 	}
 	forecastOutput := output["forecast"].([]any)[0].(map[string]any)
-	if forecastOutput["precipitation1hours"] != 37.0 {
-		t.Errorf("JSON precipitation1hours = %v, want 37", forecastOutput["precipitation1hours"])
+	if forecastOutput["precipitation1hour"] != 37.0 {
+		t.Errorf("JSON precipitation1hour = %v, want 37", forecastOutput["precipitation1hour"])
 	}
-	if forecastOutput["precipitationAmount1hours"] != 0.4 {
-		t.Errorf("JSON precipitationAmount1hours = %v, want 0.4", forecastOutput["precipitationAmount1hours"])
+	if forecastOutput["precipitationAmount1hour"] != 0.4 {
+		t.Errorf("JSON precipitationAmount1hour = %v, want 0.4", forecastOutput["precipitationAmount1hour"])
 	}
 
 	units := output["meta"].(map[string]any)["units"].(map[string]any)
-	if units["precipitation1hours"] != "percent" {
-		t.Errorf("precipitation1hours unit = %v, want percent", units["precipitation1hours"])
+	if units["precipitation1hour"] != "percent" {
+		t.Errorf("precipitation1hour unit = %v, want percent", units["precipitation1hour"])
 	}
-	if units["precipitationAmount1hours"] != "mm" {
-		t.Errorf("precipitationAmount1hours unit = %v, want mm", units["precipitationAmount1hours"])
+	if units["precipitationAmount1hour"] != "mm" {
+		t.Errorf("precipitationAmount1hour unit = %v, want mm", units["precipitationAmount1hour"])
 	}
 }
 
@@ -83,11 +83,11 @@ func TestUnavailableHourlyPrecipitationOmittedFromJSON(t *testing.T) {
 	if err := json.Unmarshal(encoded, &output); err != nil {
 		t.Fatalf("unmarshal forecast JSON: %v", err)
 	}
-	if _, ok := output["precipitation1hours"]; ok {
-		t.Error("precipitation1hours should be omitted when unavailable")
+	if _, ok := output["precipitation1hour"]; ok {
+		t.Error("precipitation1hour should be omitted when unavailable")
 	}
-	if _, ok := output["precipitationAmount1hours"]; ok {
-		t.Error("precipitationAmount1hours should be omitted when unavailable")
+	if _, ok := output["precipitationAmount1hour"]; ok {
+		t.Error("precipitationAmount1hour should be omitted when unavailable")
 	}
 }
 
@@ -96,8 +96,8 @@ func TestHourlyPrecipitationDoesNotChangeCompactForecast(t *testing.T) {
 	amount := 0.4
 	base := Forecast{TimeUnix: 1234}
 	withHourlyPrecipitation := base
-	withHourlyPrecipitation.Precipitation1Hours = &probability
-	withHourlyPrecipitation.PrecipitationAmount1Hours = &amount
+	withHourlyPrecipitation.Precipitation1Hour = &probability
+	withHourlyPrecipitation.PrecipitationAmount1Hour = &amount
 
 	got := forecastToCompactArray(withHourlyPrecipitation)
 	want := forecastToCompactArray(base)

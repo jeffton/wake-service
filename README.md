@@ -49,7 +49,7 @@ Query parameters:
 - `lon` (float, optional).
 - `format` (optional): `json` (default) or `compact`.
 
-The response includes merged ocean + weather forecast data. Times without location forecast data (ocean-only samples) are omitted. The `compact` format uses arrays for each forecast entry (limited to 12 entries and omits cloud cover). The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available; it returns all available forecast times. JSON timestamps are formatted in local time. Precipitation probability is reported as `precipitation1hours` and `precipitation12hours`, and the next-hour amount is reported as `precipitationAmount1hours` when available. `meta.units` describes the units.
+The response includes merged ocean + weather forecast data. Times without location forecast data (ocean-only samples) are omitted. The `compact` format uses arrays for each forecast entry (limited to 12 entries and omits cloud cover). The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available; it returns all available forecast times. JSON timestamps are formatted in local time. Precipitation probability is reported as `precipitation1hour` and `precipitation12hours`, and the next-hour amount is reported as `precipitationAmount1hour` when available. `meta.units` describes the units.
 
 Weather conditions are interpreted server-side, including cloud overlays and heavy/high cloud variants. The `condition` values are:
 
