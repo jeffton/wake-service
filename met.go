@@ -67,6 +67,10 @@ type WeatherTimeseriesEntry struct {
 			Summary struct {
 				SymbolCode string `json:"symbol_code"`
 			} `json:"summary"`
+			Details struct {
+				ProbabilityOfPrecipitation *float64 `json:"probability_of_precipitation"`
+				PrecipitationAmount        *float64 `json:"precipitation_amount"`
+			} `json:"details"`
 		} `json:"next_1_hours"`
 		Next12Hours struct {
 			Summary struct {

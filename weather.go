@@ -32,17 +32,19 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 	response := ApiResponseJSON{
 		Meta: &ResponseMeta{
 			Units: ForecastUnits{
-				Time:                 "local",
-				SeaTemperature:       "celsius",
-				WaveHeight:           "meters",
-				WaveDirection:        "degrees",
-				Temperature:          "celsius",
-				WindSpeed:            "m/s",
-				WindDirection:        "degrees",
-				CloudCover:           "percent",
-				Condition:            "text",
-				UvIndex:              "index",
-				Precipitation12Hours: "percent",
+				Time:                      "local",
+				SeaTemperature:            "celsius",
+				WaveHeight:                "meters",
+				WaveDirection:             "degrees",
+				Temperature:               "celsius",
+				WindSpeed:                 "m/s",
+				WindDirection:             "degrees",
+				CloudCover:                "percent",
+				Condition:                 "text",
+				UvIndex:                   "index",
+				Precipitation1Hours:       "percent",
+				PrecipitationAmount1Hours: "mm",
+				Precipitation12Hours:      "percent",
 			},
 		},
 		RequestPosition: Coordinates{requestPos.Lat, requestPos.Lon},
@@ -104,6 +106,8 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 				forecast.WindDirection = floatPtr(entry.Data.Instant.Details.WindFromDirection)
 				forecast.CloudCover = buildCloudCover(entry)
 				forecast.UvIndex = floatPtr(entry.Data.Instant.Details.UltravioletIndexClearSky)
+				forecast.Precipitation1Hours = entry.Data.Next1Hours.Details.ProbabilityOfPrecipitation
+				forecast.PrecipitationAmount1Hours = entry.Data.Next1Hours.Details.PrecipitationAmount
 
 				condition := mapSymbolToCondition(entry.Data.Next1Hours.Summary.SymbolCode, entry)
 				if condition != "" {
