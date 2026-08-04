@@ -28,7 +28,7 @@ const (
 	ForecastEntrySize
 )
 
-func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrResponse, requestPos Position, errors []string) ApiResponseJSON {
+func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrResponse, requestPos Position, errors []string) ApiResponseJSON {
 	response := ApiResponseJSON{
 		Meta: &ResponseMeta{
 			Units: ForecastUnits{
@@ -59,27 +59,16 @@ func buildForecastResponse(oceanData *OceanYrResponse, weatherData *WeatherYrRes
 	weatherTimes := make(map[int64]bool)
 
 	if oceanData != nil {
-		if len(oceanData.Geometry.Coordinates) >= 2 {
-			response.OceanForecastPosition = &Coordinates{oceanData.Geometry.Coordinates[1], oceanData.Geometry.Coordinates[0]}
-		}
+		response.OceanForecastPosition = oceanData.Position
 
-		if oceanData.Properties.Meta.Error != nil {
-			appendResponseError(&response, fmt.Sprintf("ocean API error: %v", oceanData.Properties.Meta.Error))
+		if oceanData.APIError != nil {
+			appendResponseError(&response, fmt.Sprintf("ocean API error: %v", oceanData.APIError))
 		} else {
-			for _, entry := range oceanData.Properties.Timeseries {
-				parsedTime, err := time.Parse(time.RFC3339, entry.Time)
-				if err != nil {
-					log.Printf("Skipping ocean forecast due to invalid time format: %v", err)
-					continue
-				}
-				ts := parsedTime.Unix()
-				forecast := ensureForecast(forecasts, ts)
-				st := entry.Data.Instant.Details.SeaWaterTemperature
-				forecast.SeaTemperature = &st
-				wh := entry.Data.Instant.Details.SeaSurfaceWaveHeight
-				forecast.WaveHeight = &wh
-				wd := entry.Data.Instant.Details.SeaSurfaceWaveFromDirection
-				forecast.WaveDirection = &wd
+			for _, entry := range oceanData.Timeseries {
+				forecast := ensureForecast(forecasts, entry.Time)
+				forecast.SeaTemperature = entry.SeaTemperature
+				forecast.WaveHeight = entry.WaveHeight
+				forecast.WaveDirection = entry.WaveDirection
 			}
 		}
 	}

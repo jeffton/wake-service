@@ -1,8 +1,8 @@
 # Wake Service
 
-Wake is a small Go service that proxies the YR ocean and location forecasts, adds caching, stores a trusted location, and exposes compact or JSON-readable weather responses for clients like Garmin watch faces and AI agents. It can also schedule a configurable cron command after a workout.
+Wake is a small Go service that proxies YR location and ocean forecasts, adds caching, stores a trusted location, and exposes compact or JSON-readable weather responses for clients like Garmin watch faces and AI agents. It can also schedule a configurable cron command after a workout. Outside the area covered by YR Oceanforecast, marine data is fetched from Open-Meteo.
 
-Data is provided by the [Norwegian Meteorological Institute (YR)](https://api.met.no).
+Weather and regional ocean data are provided by the [Norwegian Meteorological Institute (YR)](https://api.met.no). The global marine fallback is provided by [Open-Meteo](https://open-meteo.com/en/docs/marine-weather-api), using marine models from providers including [DWD](https://www.dwd.de/), Météo-France/Copernicus, ECMWF, and NOAA.
 
 ## Endpoints
 
@@ -49,7 +49,7 @@ Query parameters:
 - `lon` (float, optional).
 - `format` (optional): `json` (default) or `compact`.
 
-The response includes merged ocean + weather forecast data. Times without location forecast data (ocean-only samples) are omitted. The `compact` format uses arrays for each forecast entry (limited to 12 entries and omits cloud cover). The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available; it returns all available forecast times. JSON timestamps are formatted in local time. Precipitation probability is reported as `precipitation1hour` and `precipitation12hours`, and the next-hour amount is reported as `precipitationAmount1hour` when available. `meta.units` describes the units.
+The response includes merged ocean + weather forecast data. Open-Meteo is used for sea-surface temperature, wave height, and wave direction only when YR reports that the coordinates are outside its Oceanforecast coverage. Some of its marine datasets use an approximately 8 km grid; resolution varies by model. The fallback is suitable for weather reports, not coastal navigation. Times without location forecast data (ocean-only samples) are omitted. The `compact` format uses arrays for each forecast entry (limited to 12 entries and omits cloud cover). The `json` format uses objects with named keys, including a `cloudCover` object with `total`, `low`, `medium`, and `high` fields when available; it returns all available forecast times. JSON timestamps are formatted in local time. Precipitation probability is reported as `precipitation1hour` and `precipitation12hours`, and the next-hour amount is reported as `precipitationAmount1hour` when available. `meta.units` describes the units.
 
 Weather conditions are interpreted server-side, including cloud overlays and heavy/high cloud variants. The `condition` values are:
 

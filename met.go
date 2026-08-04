@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -12,6 +14,19 @@ const (
 	oceanForecastURL   = "https://api.met.no/weatherapi/oceanforecast/2.0/complete"
 	weatherForecastURL = "https://api.met.no/weatherapi/locationforecast/2.0/complete"
 )
+
+type OceanForecastData struct {
+	Position   *Coordinates
+	APIError   map[string]interface{}
+	Timeseries []OceanForecastEntry
+}
+
+type OceanForecastEntry struct {
+	Time           int64
+	SeaTemperature *float64
+	WaveHeight     *float64
+	WaveDirection  *float64
+}
 
 type OceanYrResponse struct {
 	Geometry struct {
@@ -83,9 +98,46 @@ type WeatherTimeseriesEntry struct {
 	} `json:"data"`
 }
 
-func fetchOceanData(client *http.Client, userAgent string, pos Position) (*OceanYrResponse, []byte, error) {
+func fetchOceanData(client *http.Client, userAgent string, pos Position) (*OceanForecastData, []byte, error) {
 	apiURL := fmt.Sprintf("%s?lat=%.4f&lon=%.4f", oceanForecastURL, pos.Lat, pos.Lon)
-	return fetchYrData[OceanYrResponse](client, userAgent, apiURL)
+	yrData, rawBody, err := fetchYrData[OceanYrResponse](client, userAgent, apiURL)
+	if err == nil {
+		return normalizeYrOceanData(yrData), nil, nil
+	}
+
+	httpErr, ok := err.(*HTTPStatusError)
+	if !ok || httpErr.StatusCode != http.StatusUnprocessableEntity || !strings.EqualFold(httpErr.ErrorClass, "Outsidegeographicarea") {
+		return nil, rawBody, err
+	}
+
+	fallbackData, fallbackBody, fallbackErr := fetchOpenMeteoMarineData(client, userAgent, pos)
+	if fallbackErr != nil {
+		return nil, fallbackBody, fmt.Errorf("Yr ocean forecast outside coverage (%s); Open-Meteo fallback failed: %w", strings.TrimSpace(string(rawBody)), fallbackErr)
+	}
+	return fallbackData, nil, nil
+}
+
+func normalizeYrOceanData(data *OceanYrResponse) *OceanForecastData {
+	normalized := &OceanForecastData{APIError: data.Properties.Meta.Error}
+	if len(data.Geometry.Coordinates) >= 2 {
+		normalized.Position = &Coordinates{data.Geometry.Coordinates[1], data.Geometry.Coordinates[0]}
+	}
+
+	for _, entry := range data.Properties.Timeseries {
+		parsedTime, err := time.Parse(time.RFC3339, entry.Time)
+		if err != nil {
+			log.Printf("Skipping ocean forecast due to invalid time format: %v", err)
+			continue
+		}
+		details := entry.Data.Instant.Details
+		normalized.Timeseries = append(normalized.Timeseries, OceanForecastEntry{
+			Time:           parsedTime.Unix(),
+			SeaTemperature: floatPtr(details.SeaWaterTemperature),
+			WaveHeight:     floatPtr(details.SeaSurfaceWaveHeight),
+			WaveDirection:  floatPtr(details.SeaSurfaceWaveFromDirection),
+		})
+	}
+	return normalized
 }
 
 func fetchWeatherData(client *http.Client, userAgent string, pos Position) (*WeatherYrResponse, []byte, error) {
@@ -110,6 +162,13 @@ func fetchYrData[T any](client *http.Client, userAgent, apiURL string) (*T, []by
 	if err != nil {
 		return nil, nil, fmt.Errorf("read response: %w", err)
 	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, body, &HTTPStatusError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+			ErrorClass: resp.Header.Get("X-ErrorClass"),
+		}
+	}
 
 	var payload T
 	if err := json.Unmarshal(body, &payload); err != nil {
@@ -117,6 +176,16 @@ func fetchYrData[T any](client *http.Client, userAgent, apiURL string) (*T, []by
 	}
 
 	return &payload, nil, nil
+}
+
+type HTTPStatusError struct {
+	StatusCode int
+	Status     string
+	ErrorClass string
+}
+
+func (e *HTTPStatusError) Error() string {
+	return fmt.Sprintf("unexpected HTTP status: %s", e.Status)
 }
 
 func defaultHTTPClient() *http.Client {

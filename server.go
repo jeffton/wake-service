@@ -214,9 +214,9 @@ func (s *Server) writeWeatherResponse(w http.ResponseWriter, format string, resp
 	}
 }
 
-func (s *Server) fetchForecasts(pos Position) (*OceanYrResponse, *WeatherYrResponse, []string) {
+func (s *Server) fetchForecasts(pos Position) (*OceanForecastData, *WeatherYrResponse, []string) {
 	var (
-		oceanData   *OceanYrResponse
+		oceanData   *OceanForecastData
 		weatherData *WeatherYrResponse
 		errors      []string
 		mu          sync.Mutex
