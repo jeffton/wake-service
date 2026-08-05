@@ -182,11 +182,25 @@ func applyNowcast(forecasts map[int64]*Forecast, weatherTimes map[int64]bool, da
 	if entry.Data.Next1Hours.Details.PrecipitationAmount != nil {
 		forecast.PrecipitationAmount1Hour = entry.Data.Next1Hours.Details.PrecipitationAmount
 	}
+	if nowcastIndicatesPrecipitation(entry) {
+		certainty := 100.0
+		forecast.Precipitation12Hours = &certainty
+	}
 
 	condition := mapNowcastSymbolToCondition(entry.Data.Next1Hours.Summary.SymbolCode)
 	if condition != "" {
 		forecast.Condition = &condition
 	}
+}
+
+func nowcastIndicatesPrecipitation(entry NowcastTimeseriesEntry) bool {
+	if rate := entry.Data.Instant.Details.PrecipitationRate; rate != nil && *rate > 0 {
+		return true
+	}
+	if amount := entry.Data.Next1Hours.Details.PrecipitationAmount; amount != nil && *amount > 0 {
+		return true
+	}
+	return symbolImpliesPrecipitation(entry.Data.Next1Hours.Summary.SymbolCode)
 }
 
 func mapNowcastSymbolToCondition(symbolCode string) string {

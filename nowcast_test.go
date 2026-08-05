@@ -32,6 +32,7 @@ func TestNowcastOverridesCurrentLocationForecast(t *testing.T) {
 	windDirection := 140.0
 	precipitationProbability := 12.3
 	precipitationAmount := 0.0
+	precipitation12Hours := 44.4
 	forecasts := map[int64]*Forecast{
 		currentHour: {
 			TimeUnix:                 currentHour,
@@ -41,6 +42,7 @@ func TestNowcastOverridesCurrentLocationForecast(t *testing.T) {
 			Condition:                &condition,
 			Precipitation1Hour:       &precipitationProbability,
 			PrecipitationAmount1Hour: &precipitationAmount,
+			Precipitation12Hours:     &precipitation12Hours,
 		},
 	}
 	weatherTimes := map[int64]bool{currentHour: true}
@@ -80,8 +82,32 @@ func TestNowcastOverridesCurrentLocationForecast(t *testing.T) {
 	if got.PrecipitationAmount1Hour == nil || *got.PrecipitationAmount1Hour != 6.1 {
 		t.Fatalf("precipitation amount = %v, want 6.1", got.PrecipitationAmount1Hour)
 	}
+	if got.Precipitation12Hours == nil || *got.Precipitation12Hours != 100 {
+		t.Fatalf("12-hour precipitation probability = %v, want 100", got.Precipitation12Hours)
+	}
 	if got.Temperature == nil || *got.Temperature != 20.4 {
 		t.Fatalf("temperature = %v, want 20.4", got.Temperature)
+	}
+}
+
+func TestDryNowcastPreservesTwelveHourLocationForecast(t *testing.T) {
+	now := time.Date(2026, 8, 5, 5, 58, 0, 0, time.UTC)
+	currentHour := now.Truncate(time.Hour).Unix()
+	probability := 44.4
+	forecasts := map[int64]*Forecast{currentHour: {TimeUnix: currentHour, Precipitation12Hours: &probability}}
+	nowcast := &NowcastYrResponse{}
+	nowcast.Properties.Meta.RadarCoverage = "ok"
+	entry := NowcastTimeseriesEntry{Time: "2026-08-05T06:00:00Z"}
+	rate := 0.0
+	amount := 0.0
+	entry.Data.Instant.Details.PrecipitationRate = &rate
+	entry.Data.Next1Hours.Details.PrecipitationAmount = &amount
+	entry.Data.Next1Hours.Summary.SymbolCode = "clearsky_day"
+	nowcast.Properties.Timeseries = append(nowcast.Properties.Timeseries, entry)
+
+	applyNowcast(forecasts, map[int64]bool{currentHour: true}, nowcast, now)
+	if got := forecasts[currentHour].Precipitation12Hours; got == nil || *got != 44.4 {
+		t.Fatalf("12-hour precipitation probability = %v, want preserved value 44.4", got)
 	}
 }
 
