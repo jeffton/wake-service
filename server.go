@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const cacheTTL = time.Hour
+const cacheTTL = 2 * time.Minute
 
 const (
 	formatJSON    = "json"
@@ -190,8 +190,8 @@ func (s *Server) weatherResponse(pos Position) ApiResponseJSON {
 		return cached
 	}
 
-	oceanData, weatherData, errors := s.fetchForecasts(pos)
-	response := buildForecastResponse(oceanData, weatherData, pos, errors)
+	oceanData, weatherData, nowcastData, errors := s.fetchForecasts(pos)
+	response := buildForecastResponse(oceanData, weatherData, nowcastData, pos, errors)
 
 	if response.Error == nil {
 		s.cache.Set(cacheKey, response)
@@ -214,16 +214,17 @@ func (s *Server) writeWeatherResponse(w http.ResponseWriter, format string, resp
 	}
 }
 
-func (s *Server) fetchForecasts(pos Position) (*OceanForecastData, *WeatherYrResponse, []string) {
+func (s *Server) fetchForecasts(pos Position) (*OceanForecastData, *WeatherYrResponse, *NowcastYrResponse, []string) {
 	var (
 		oceanData   *OceanForecastData
 		weatherData *WeatherYrResponse
+		nowcastData *NowcastYrResponse
 		errors      []string
 		mu          sync.Mutex
 		wg          sync.WaitGroup
 	)
 
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -257,9 +258,23 @@ func (s *Server) fetchForecasts(pos Position) (*OceanForecastData, *WeatherYrRes
 		weatherData = data
 	}()
 
+	go func() {
+		defer wg.Done()
+		data, rawBody, err := fetchNowcastData(s.httpClient, s.options.UserAgent, pos)
+		if err != nil {
+			if rawBody != nil {
+				log.Printf("Error getting nowcast data: %v, body: %s", err, string(rawBody))
+			} else {
+				log.Printf("Error getting nowcast data: %v", err)
+			}
+			return
+		}
+		nowcastData = data
+	}()
+
 	wg.Wait()
 
-	return oceanData, weatherData, errors
+	return oceanData, weatherData, nowcastData, errors
 }
 
 var (

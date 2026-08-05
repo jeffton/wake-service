@@ -25,7 +25,7 @@ func TestHourlyPrecipitationInJSONForecast(t *testing.T) {
 		t.Fatalf("unmarshal weather response: %v", err)
 	}
 
-	response := buildForecastResponse(nil, &weather, Position{Lat: 59, Lon: 10}, nil)
+	response := buildForecastResponse(nil, &weather, nil, Position{Lat: 59, Lon: 10}, nil)
 	if len(response.Forecast) != 1 {
 		t.Fatalf("got %d forecasts, want 1", len(response.Forecast))
 	}
@@ -74,7 +74,7 @@ func TestUnavailableHourlyPrecipitationOmittedFromJSON(t *testing.T) {
 		t.Fatalf("unmarshal weather response: %v", err)
 	}
 
-	response := buildForecastResponse(nil, &weather, Position{}, nil)
+	response := buildForecastResponse(nil, &weather, nil, Position{}, nil)
 	encoded, err := json.Marshal(response.Forecast[0])
 	if err != nil {
 		t.Fatalf("marshal forecast: %v", err)

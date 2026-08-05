@@ -13,6 +13,7 @@ import (
 const (
 	oceanForecastURL   = "https://api.met.no/weatherapi/oceanforecast/2.0/complete"
 	weatherForecastURL = "https://api.met.no/weatherapi/locationforecast/2.0/complete"
+	nowcastURL         = "https://api.met.no/weatherapi/nowcast/2.0/complete"
 )
 
 type OceanForecastData struct {
@@ -61,6 +62,42 @@ type WeatherYrResponse struct {
 		} `json:"meta"`
 		Timeseries []WeatherTimeseriesEntry `json:"timeseries"`
 	} `json:"properties"`
+}
+
+type NowcastYrResponse struct {
+	Geometry struct {
+		Coordinates []float64 `json:"coordinates"`
+	} `json:"geometry"`
+	Properties struct {
+		Meta struct {
+			UpdatedAt     string `json:"updated_at"`
+			RadarCoverage string `json:"radar_coverage"`
+		} `json:"meta"`
+		Timeseries []NowcastTimeseriesEntry `json:"timeseries"`
+	} `json:"properties"`
+}
+
+type NowcastTimeseriesEntry struct {
+	Time string `json:"time"`
+	Data struct {
+		Instant struct {
+			Details struct {
+				AirTemperature           *float64 `json:"air_temperature"`
+				PrecipitationRate        *float64 `json:"precipitation_rate"`
+				WindFromDirection        *float64 `json:"wind_from_direction"`
+				WindSpeed                *float64 `json:"wind_speed"`
+				UltravioletIndexClearSky *float64 `json:"ultraviolet_index_clear_sky"`
+			} `json:"details"`
+		} `json:"instant"`
+		Next1Hours struct {
+			Summary struct {
+				SymbolCode string `json:"symbol_code"`
+			} `json:"summary"`
+			Details struct {
+				PrecipitationAmount *float64 `json:"precipitation_amount"`
+			} `json:"details"`
+		} `json:"next_1_hours"`
+	} `json:"data"`
 }
 
 type WeatherTimeseriesEntry struct {
@@ -143,6 +180,20 @@ func normalizeYrOceanData(data *OceanYrResponse) *OceanForecastData {
 func fetchWeatherData(client *http.Client, userAgent string, pos Position) (*WeatherYrResponse, []byte, error) {
 	apiURL := fmt.Sprintf("%s?lat=%.4f&lon=%.4f", weatherForecastURL, pos.Lat, pos.Lon)
 	return fetchYrData[WeatherYrResponse](client, userAgent, apiURL)
+}
+
+func fetchNowcastData(client *http.Client, userAgent string, pos Position) (*NowcastYrResponse, []byte, error) {
+	apiURL := fmt.Sprintf("%s?lat=%.4f&lon=%.4f", nowcastURL, pos.Lat, pos.Lon)
+	data, rawBody, err := fetchYrData[NowcastYrResponse](client, userAgent, apiURL)
+	if err == nil {
+		return data, nil, nil
+	}
+
+	httpErr, ok := err.(*HTTPStatusError)
+	if ok && httpErr.StatusCode == http.StatusUnprocessableEntity && strings.EqualFold(httpErr.ErrorClass, "Outsidegeographicarea") {
+		return nil, nil, nil
+	}
+	return nil, rawBody, err
 }
 
 func fetchYrData[T any](client *http.Client, userAgent, apiURL string) (*T, []byte, error) {

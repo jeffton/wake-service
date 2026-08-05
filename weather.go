@@ -28,7 +28,8 @@ const (
 	ForecastEntrySize
 )
 
-func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrResponse, requestPos Position, errors []string) ApiResponseJSON {
+func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrResponse, nowcastData *NowcastYrResponse, requestPos Position, errors []string) ApiResponseJSON {
+	requestTime := time.Now()
 	response := ApiResponseJSON{
 		Meta: &ResponseMeta{
 			Units: ForecastUnits{
@@ -48,7 +49,7 @@ func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrR
 			},
 		},
 		RequestPosition: Coordinates{requestPos.Lat, requestPos.Lon},
-		RequestTime:     time.Now().Unix(),
+		RequestTime:     requestTime.Unix(),
 	}
 
 	if len(errors) > 0 {
@@ -116,6 +117,8 @@ func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrR
 		}
 	}
 
+	applyNowcast(forecasts, weatherTimes, nowcastData, requestTime)
+
 	forecastSlice := make([]Forecast, 0, len(forecasts))
 	for _, f := range forecasts {
 		if len(weatherTimes) > 0 {
@@ -137,6 +140,58 @@ func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrR
 	}
 
 	return response
+}
+
+func applyNowcast(forecasts map[int64]*Forecast, weatherTimes map[int64]bool, data *NowcastYrResponse, now time.Time) {
+	if data == nil || data.Properties.Meta.RadarCoverage != "ok" || len(data.Properties.Timeseries) == 0 {
+		return
+	}
+
+	currentHour := now.Truncate(time.Hour).Unix()
+	if !weatherTimes[currentHour] {
+		return
+	}
+
+	entry := data.Properties.Timeseries[0]
+	entryTime, err := time.Parse(time.RFC3339, entry.Time)
+	if err != nil {
+		log.Printf("Skipping nowcast due to invalid time format: %v", err)
+		return
+	}
+	if delta := entryTime.Sub(now); delta < -10*time.Minute || delta > 10*time.Minute {
+		return
+	}
+
+	// Nowcast rounds its first point to a five-minute boundary, which can fall
+	// just inside the next hour. It still represents current conditions, so apply
+	// it to Locationforecast's current hourly entry.
+	forecast := forecasts[currentHour]
+	details := entry.Data.Instant.Details
+	if details.AirTemperature != nil {
+		forecast.Temperature = details.AirTemperature
+	}
+	if details.WindSpeed != nil {
+		forecast.WindSpeed = details.WindSpeed
+	}
+	if details.WindFromDirection != nil {
+		forecast.WindDirection = details.WindFromDirection
+	}
+	if details.UltravioletIndexClearSky != nil {
+		forecast.UvIndex = details.UltravioletIndexClearSky
+	}
+	if entry.Data.Next1Hours.Details.PrecipitationAmount != nil {
+		forecast.PrecipitationAmount1Hour = entry.Data.Next1Hours.Details.PrecipitationAmount
+	}
+
+	condition := mapNowcastSymbolToCondition(entry.Data.Next1Hours.Summary.SymbolCode)
+	if condition != "" {
+		forecast.Condition = &condition
+	}
+}
+
+func mapNowcastSymbolToCondition(symbolCode string) string {
+	entry := WeatherTimeseriesEntry{}
+	return mapSymbolToCondition(symbolCode, entry)
 }
 
 func buildCompactResponse(response ApiResponseJSON) ApiResponseCompact {
