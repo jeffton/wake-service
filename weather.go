@@ -29,10 +29,7 @@ const (
 )
 
 func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrResponse, nowcastData *NowcastYrResponse, requestPos Position, errors []string) ApiResponseJSON {
-	return buildForecastResponseAt(oceanData, weatherData, nowcastData, requestPos, errors, time.Now())
-}
-
-func buildForecastResponseAt(oceanData *OceanForecastData, weatherData *WeatherYrResponse, nowcastData *NowcastYrResponse, requestPos Position, errors []string, requestTime time.Time) ApiResponseJSON {
+	requestTime := time.Now()
 	response := ApiResponseJSON{
 		Meta: &ResponseMeta{
 			Units: ForecastUnits{
@@ -123,15 +120,11 @@ func buildForecastResponseAt(oceanData *OceanForecastData, weatherData *WeatherY
 	applyNowcast(forecasts, weatherTimes, nowcastData, requestTime)
 
 	forecastSlice := make([]Forecast, 0, len(forecasts))
-	currentHour := requestTime.Truncate(time.Hour).Unix()
 	for _, f := range forecasts {
 		if len(weatherTimes) > 0 {
 			if !weatherTimes[f.TimeUnix] {
 				continue
 			}
-		}
-		if f.TimeUnix < currentHour {
-			continue
 		}
 		forecastSlice = append(forecastSlice, *f)
 	}

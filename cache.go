@@ -15,17 +15,13 @@ func NewForecastCache() *ForecastCache {
 }
 
 func (c *ForecastCache) Get(key string, maxAge time.Duration) (ApiResponseJSON, bool) {
-	return c.getAt(key, maxAge, time.Now())
-}
-
-func (c *ForecastCache) getAt(key string, maxAge time.Duration, now time.Time) (ApiResponseJSON, bool) {
 	c.mu.RLock()
 	entry, ok := c.entries[key]
 	c.mu.RUnlock()
 	if !ok {
 		return ApiResponseJSON{}, false
 	}
-	if now.Sub(entry.Created) > maxAge || entry.Created.Truncate(time.Hour) != now.Truncate(time.Hour) {
+	if time.Since(entry.Created) > maxAge {
 		return ApiResponseJSON{}, false
 	}
 	return entry.Data, true
