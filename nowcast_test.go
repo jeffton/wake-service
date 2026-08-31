@@ -90,11 +90,16 @@ func TestNowcastOverridesCurrentLocationForecast(t *testing.T) {
 	}
 }
 
-func TestDryNowcastPreservesTwelveHourLocationForecast(t *testing.T) {
+func TestDryNowcastPreservesLocationForecastPrecipitationAndCondition(t *testing.T) {
 	now := time.Date(2026, 8, 5, 5, 58, 0, 0, time.UTC)
 	currentHour := now.Truncate(time.Hour).Unix()
 	probability := 44.4
-	forecasts := map[int64]*Forecast{currentHour: {TimeUnix: currentHour, Precipitation12Hours: &probability}}
+	condition := "partly cloudy 80"
+	forecasts := map[int64]*Forecast{currentHour: {
+		TimeUnix:             currentHour,
+		Precipitation12Hours: &probability,
+		Condition:            &condition,
+	}}
 	nowcast := &NowcastYrResponse{}
 	nowcast.Properties.Meta.RadarCoverage = "ok"
 	entry := NowcastTimeseriesEntry{Time: "2026-08-05T06:00:00Z"}
@@ -108,6 +113,9 @@ func TestDryNowcastPreservesTwelveHourLocationForecast(t *testing.T) {
 	applyNowcast(forecasts, map[int64]bool{currentHour: true}, nowcast, now)
 	if got := forecasts[currentHour].Precipitation12Hours; got == nil || *got != 44.4 {
 		t.Fatalf("12-hour precipitation probability = %v, want preserved value 44.4", got)
+	}
+	if got := forecasts[currentHour].Condition; got == nil || *got != "partly cloudy 80" {
+		t.Fatalf("condition = %v, want preserved Locationforecast condition", got)
 	}
 }
 

@@ -185,11 +185,11 @@ func applyNowcast(forecasts map[int64]*Forecast, weatherTimes map[int64]bool, da
 	if nowcastIndicatesPrecipitation(entry) {
 		certainty := 100.0
 		forecast.Precipitation12Hours = &certainty
-	}
 
-	condition := mapNowcastSymbolToCondition(entry.Data.Next1Hours.Summary.SymbolCode)
-	if condition != "" {
-		forecast.Condition = &condition
+		condition := mapNowcastSymbolToCondition(entry.Data.Next1Hours.Summary.SymbolCode)
+		if condition != "" {
+			forecast.Condition = &condition
+		}
 	}
 }
 
