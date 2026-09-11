@@ -78,7 +78,7 @@ func fetchOpenMeteoMarineData(client *http.Client, userAgent string, pos Positio
 		data.Timeseries = append(data.Timeseries, entry)
 	}
 	if !hasMarineData {
-		return nil, body, fmt.Errorf("response contains no marine forecast data")
+		return nil, nil, nil
 	}
 
 	return data, nil, nil

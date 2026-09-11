@@ -131,7 +131,7 @@ func TestFetchOceanDataDoesNotFallbackForUnrelatedYr422(t *testing.T) {
 	}
 }
 
-func TestOpenMeteoRejectsResponseWithoutMarineData(t *testing.T) {
+func TestOpenMeteoTreatsResponseWithoutMarineDataAsUnavailable(t *testing.T) {
 	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 		return testHTTPResponse(http.StatusOK, `{
 			"latitude":40,
@@ -145,9 +145,12 @@ func TestOpenMeteoRejectsResponseWithoutMarineData(t *testing.T) {
 		}`), nil
 	})}
 
-	_, _, err := fetchOpenMeteoMarineData(client, "Wake test", Position{})
-	if err == nil || !strings.Contains(err.Error(), "no marine forecast data") {
-		t.Fatalf("error = %v, want no marine forecast data", err)
+	data, rawBody, err := fetchOpenMeteoMarineData(client, "Wake test", Position{})
+	if err != nil {
+		t.Fatalf("error = %v, want nil", err)
+	}
+	if data != nil || rawBody != nil {
+		t.Fatalf("data = %v, body = %q; want marine data to be unavailable", data, rawBody)
 	}
 }
 
