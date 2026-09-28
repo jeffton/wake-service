@@ -10,7 +10,7 @@ All endpoints require an `X-Api-Key` header.
 
 ### `GET /location`
 
-Returns the stored location. Requires a `full` API key.
+Returns only the latest stored location. Requires a `full` API key.
 
 Response:
 
@@ -25,7 +25,7 @@ Response:
 
 ### `POST /location`
 
-Stores the location. Requires a `full` API key. All parameters are supplied in the JSON body.
+Stores the location and retains updates from the past 24 hours in `dataDir/location.json`. The API response remains a single location. Requires a `full` API key. All parameters are supplied in the JSON body.
 
 JSON body:
 
@@ -35,9 +35,9 @@ JSON body:
   "lon": 10.1234,
   "precision": "reduced"
 }
-
-`precision` is optional and stored as supplied by the client.
 ```
+
+`precision` is optional and stored as supplied by the client. The local `location.json` file has the form `{"locations": [{"lat": 59.1234, "lon": 10.1234, "precision": "reduced", "ts": 1779020000}]}`. Expired entries are removed when a new position arrives; if updates stop, the last position remains available to the API. Existing single-position files are migrated on the next POST.
 
 ### `GET /weather`
 
