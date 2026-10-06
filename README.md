@@ -181,7 +181,7 @@ Example:
       "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
     },
     "wakeup": {
-      "command": "batty2 cron add --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --in \"3m\" --session daily-inline",
+      "command": "batty2 cron add --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --in \"3m\" --session daily-detached",
       "prompt": "The user is awake. Check current context and help plan the day.",
       "hour": 4
     }
