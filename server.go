@@ -201,6 +201,12 @@ func (s *Server) weatherResponse(pos Position) ApiResponseJSON {
 }
 
 func (s *Server) writeWeatherResponse(w http.ResponseWriter, format string, response ApiResponseJSON) {
+	if len(response.Forecast) == 0 {
+		log.Printf("Weather unavailable: lat=%.4f lon=%.4f error=%v", response.RequestPosition[0], response.RequestPosition[1], response.Error)
+		writeJSONError(w, http.StatusBadGateway, fmt.Sprint(response.Error))
+		return
+	}
+
 	if format == formatCompact {
 		compact := buildCompactResponse(response)
 		if err := json.NewEncoder(w).Encode(compact); err != nil {
@@ -234,6 +240,7 @@ func (s *Server) fetchForecasts(pos Position) (*OceanForecastData, *WeatherYrRes
 			if rawBody != nil {
 				errMsg = fmt.Sprintf("%s, body: %s", errMsg, string(rawBody))
 			}
+			log.Printf("Oceanforecast failed: lat=%.4f lon=%.4f %s", pos.Lat, pos.Lon, errMsg)
 			mu.Lock()
 			errors = append(errors, errMsg)
 			mu.Unlock()
@@ -250,6 +257,7 @@ func (s *Server) fetchForecasts(pos Position) (*OceanForecastData, *WeatherYrRes
 			if rawBody != nil {
 				errMsg = fmt.Sprintf("%s, body: %s", errMsg, string(rawBody))
 			}
+			log.Printf("Locationforecast failed: lat=%.4f lon=%.4f %s", pos.Lat, pos.Lon, errMsg)
 			mu.Lock()
 			errors = append(errors, errMsg)
 			mu.Unlock()
@@ -263,9 +271,9 @@ func (s *Server) fetchForecasts(pos Position) (*OceanForecastData, *WeatherYrRes
 		data, rawBody, err := fetchNowcastData(s.httpClient, s.options.UserAgent, pos)
 		if err != nil {
 			if rawBody != nil {
-				log.Printf("Error getting nowcast data: %v, body: %s", err, string(rawBody))
+				log.Printf("Nowcast failed: lat=%.4f lon=%.4f error=%v body=%s", pos.Lat, pos.Lon, err, string(rawBody))
 			} else {
-				log.Printf("Error getting nowcast data: %v", err)
+				log.Printf("Nowcast failed: lat=%.4f lon=%.4f error=%v", pos.Lat, pos.Lon, err)
 			}
 			return
 		}

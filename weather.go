@@ -119,12 +119,17 @@ func buildForecastResponse(oceanData *OceanForecastData, weatherData *WeatherYrR
 
 	applyNowcast(forecasts, weatherTimes, nowcastData, requestTime)
 
+	if len(weatherTimes) == 0 {
+		if response.Error == nil {
+			response.Error = "No ordinary weather timeseries available from YR Locationforecast"
+		}
+		return response
+	}
+
 	forecastSlice := make([]Forecast, 0, len(forecasts))
 	for _, f := range forecasts {
-		if len(weatherTimes) > 0 {
-			if !weatherTimes[f.TimeUnix] {
-				continue
-			}
+		if !weatherTimes[f.TimeUnix] {
+			continue
 		}
 		forecastSlice = append(forecastSlice, *f)
 	}
