@@ -18,7 +18,7 @@ func TestBatty2CronCommandPreservesPrompt(t *testing.T) {
 	t.Setenv("CAPTURE", capture)
 	prompt := "David's activity; $(touch /should-not-exist)"
 	s := &Server{}
-	command := "batty2 cron add --title \"Garmin activity\" --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --delivery direct --in 3m --session daily-detached"
+	command := "batty2 cron add --title \"Garmin activity\" --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --delivery direct --in 3m"
 	if err := s.scheduleCron(command, prompt); err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func TestBatty2CronCommandPreservesPrompt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := strings.Join([]string{"cron", "add", "--title", "Garmin activity", "--workspace", "roy", "--prompt", prompt, "--model", "openai-codex/gpt-6.1-sol", "--thinking", "medium", "--delivery", "direct", "--in", "3m", "--session", "daily-detached", ""}, "\n")
+	want := strings.Join([]string{"cron", "add", "--title", "Garmin activity", "--workspace", "roy", "--prompt", prompt, "--model", "openai-codex/gpt-6.1-sol", "--thinking", "medium", "--delivery", "direct", "--in", "3m", ""}, "\n")
 	if string(data) != want {
 		t.Fatalf("arguments = %q, want %q", data, want)
 	}
