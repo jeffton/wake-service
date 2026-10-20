@@ -177,11 +177,11 @@ Example:
   ],
   "cron": {
     "workout": {
-      "command": "batty2 cron add --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --delivery direct --in \"3m\" --session daily-detached --daily-context chat-only",
+      "command": "batty2 cron add --title \"Garmin activity\" --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --delivery direct --in \"3m\" --session daily-detached --daily-context chat-only",
       "prompt": "The user has logged an activity with Garmin. Check Garmin stats and give feedback."
     },
     "wakeup": {
-      "command": "batty2 cron add --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --delivery direct --in \"3m\" --session daily-detached",
+      "command": "batty2 cron add --title \"Morning report\" --workspace roy --prompt {prompt} --model openai-codex/gpt-6.1-sol --thinking medium --delivery direct --in \"3m\" --session daily-detached",
       "prompt": "The user is awake. Check current context and help plan the day.",
       "hour": 4
     }
