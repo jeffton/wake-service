@@ -18,7 +18,7 @@ const (
 
 type OceanForecastData struct {
 	Position   *Coordinates
-	APIError   map[string]interface{}
+	APIError   any
 	Timeseries []OceanForecastEntry
 }
 
@@ -29,13 +29,15 @@ type OceanForecastEntry struct {
 	WaveDirection  *float64
 }
 
+const oceanNoDataError = "no data at the given location"
+
 type OceanYrResponse struct {
 	Geometry struct {
 		Coordinates []float64 `json:"coordinates"`
 	} `json:"geometry"`
 	Properties struct {
 		Meta struct {
-			Error map[string]interface{} `json:"error"`
+			Error any `json:"error"`
 		} `json:"meta"`
 		Timeseries []struct {
 			Time string `json:"time"`
@@ -139,6 +141,10 @@ func fetchOceanData(client *http.Client, userAgent string, pos Position) (*Ocean
 	apiURL := fmt.Sprintf("%s?lat=%.4f&lon=%.4f", oceanForecastURL, pos.Lat, pos.Lon)
 	yrData, rawBody, err := fetchYrData[OceanYrResponse](client, userAgent, apiURL)
 	if err == nil {
+		// MET returns HTTP 200 with this message for inland points inside its model area.
+		if message, ok := yrData.Properties.Meta.Error.(string); ok && message == oceanNoDataError && len(yrData.Properties.Timeseries) == 0 {
+			return nil, nil, nil
+		}
 		return normalizeYrOceanData(yrData), nil, nil
 	}
 
